@@ -6,7 +6,7 @@
 #
 # NECESSARIO adaptar este esqueleto de makefile para suas necessidades.
 #
-# 
+#
 
 CC=gcc
 LIB_DIR=./lib
@@ -14,9 +14,26 @@ INC_DIR=./include
 BIN_DIR=./bin
 SRC_DIR=./src
 
-all:
+all: clean compile_to_object_file generate_static_library
 
 clean:
-	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~
+	@echo cleaning bin/ and lib/
+	@cp bin/apidisk.o lib/
+	@cp bin/bitmap2.o lib/
+	@rm -rf bin/*
+	@cp lib/apidisk.o bin/
+	@cp lib/bitmap2.o bin/
+	@rm -rf lib/*
 
-
+compile_to_object_file:
+	@echo compiling object files
+	@gcc -c src/tsf_manager.c -I include -o bin/tsf_manager.o
+	@gcc -c src/t2fs.c -I include -o bin/t2fs.o
+	
+generate_static_library:
+	@echo generating static library
+	@ar crs lib/libt2fs.a bin/t2fs.o bin/tsf_manager.o
+	
+test-main:
+	@gcc teste/main.c -I include -L lib -lt2fs -o teste/main
+	@./teste/main
