@@ -1,2 +1,3 @@
 t2fs.o
 tsf_manager.o
+mft_manager.o

@@ -5,18 +5,21 @@
 #include <apidisk.h>
 #include <bitmap2.h>
 #include <t2fs.h>
-#include <tsf_manager.h>
+#include <mft_manager.h>
 
 // ===== Auxiliar functions declarations ====================================================================
 
 void init_blocks();
 void initBootBlock();
+void initMFTBlock();
+
+struct t2fs_record createRegister(BYTE typeVal, char name[MAX_FILE_NAME_SIZE], DWORD blocksSize, DWORD bytesSize, DWORD mftNumber);
 
 
 // ===== Vars =============================================================================================
 
-t2fs_bootBlock bootBlock;
-t2fs_tsfBlock tsfBlock;
+struct t2fs_bootBlock bootBlock;
+struct t2fs_mftBlock mftBlock;
 
 int has_initialized = 0;
 
@@ -26,12 +29,13 @@ int has_initialized = 0;
 FILE2 create2 (char *filename) {
     if  (!has_initialized) {
       init_blocks();
+      has_initialized = 1;
     }
 }
 
 
 int delete2 (char *filename) {
-  
+  init_blocks();
 }
 
 
@@ -94,7 +98,7 @@ int closedir2 (DIR2 handle) {
 
 int identify2 (char *name, int size) {
   
-  // função implementada em tsf_manager.c apenas p/ testar a integração dos arquivos
+  // função implementada em mft_manager.c apenas p/ testar a integração dos arquivos
   print_the_sound_of_a_capybara();
   
   if (strlen(name) <= size) {
@@ -109,6 +113,7 @@ int identify2 (char *name, int size) {
 
 void init_blocks() {
   initBootBlock();
+  initMFTBlock();
 }
 
 void initBootBlock() {
@@ -117,4 +122,33 @@ void initBootBlock() {
   bootBlock.blockSize = 0x0004;
   bootBlock.MFTBlocksSize = 0x0800;
   bootBlock.diskSectorSize = 0x8000;
+  
+  printf("\nfiz init no boot\n");
+}
+
+void initMFTBlock() {
+  mftBlock.length = 0;
+  
+  // faz sentido setar os outros campos do registro de bitmap? não é um registro regular
+  mftBlock.bitmapDescriptor.TypeVal = 0x00;
+  
+  mftBlock.rootDescriptor.TypeVal = 0x00;
+  
+  mftBlock.record2.TypeVal = 0x00;
+  
+  mftBlock.record3.TypeVal = 0x00;
+  
+  printf("\nfiz init no mft\n");
+}
+
+struct t2fs_record createRegister(BYTE typeVal, char name[MAX_FILE_NAME_SIZE], DWORD blocksSize, DWORD bytesSize, DWORD mftNumber) {
+    struct t2fs_record new_register;
+    
+    new_register.TypeVal = typeVal;
+    // strcpy(new_register.name, name);
+    new_register.blocksFileSize = blocksSize;
+    new_register.bytesFileSize = bytesSize;
+    new_register.MFTNumber = mftNumber;
+    
+    return new_register;
 }
