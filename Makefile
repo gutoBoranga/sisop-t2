@@ -32,8 +32,12 @@ compile_to_object_file:
 	
 generate_static_library:
 	@echo generating static library
-	@ar crs lib/libt2fs.a bin/t2fs.o bin/tsf_manager.o
+	@ar crs lib/libt2fs.a bin/t2fs.o bin/tsf_manager.o bin/apidisk.o bin/bitmap2.o
 	
 test-main:
 	@gcc teste/main.c -I include -L lib -lt2fs -o teste/main
 	@./teste/main
+
+test:
+	@gcc teste/default.c -I include -L lib -lt2fs -o teste/default
+	@./teste/default

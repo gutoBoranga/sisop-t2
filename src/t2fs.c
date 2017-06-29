@@ -7,23 +7,26 @@
 #include <t2fs.h>
 #include <tsf_manager.h>
 
+// ===== Auxiliar functions declarations ====================================================================
+
+void init_blocks();
+void initBootBlock();
+
+
+// ===== Vars =============================================================================================
+
+t2fs_bootBlock bootBlock;
+t2fs_tsfBlock tsfBlock;
+
+int has_initialized = 0;
+
+
 // ===== API functions =====================================================================================
 
-int identify2 (char *name, int size) {
-  
-  // função implementada em tsf_manager.c apenas p/ testar a integração dos arquivos
-  print_the_sound_of_a_capybara();
-  
-  if (strlen(name) <= size) {
-    printf("\n%s\n", name);
-    return 0;
-  }
-  return -1;
-}
-
-
 FILE2 create2 (char *filename) {
-  
+    if  (!has_initialized) {
+      init_blocks();
+    }
 }
 
 
@@ -86,4 +89,32 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) {
 
 int closedir2 (DIR2 handle) {
   
+}
+
+
+int identify2 (char *name, int size) {
+  
+  // função implementada em tsf_manager.c apenas p/ testar a integração dos arquivos
+  print_the_sound_of_a_capybara();
+  
+  if (strlen(name) <= size) {
+    printf("\n%s\n", name);
+    return 0;
+  }
+  return -1;
+}
+
+
+// ===== Auxiliar functions =====================================================================================
+
+void init_blocks() {
+  initBootBlock();
+}
+
+void initBootBlock() {
+  strcpy(bootBlock.id, "T2fs");
+  bootBlock.version = 0x7E11;
+  bootBlock.blockSize = 0x0004;
+  bootBlock.MFTBlocksSize = 0x0800;
+  bootBlock.diskSectorSize = 0x8000;
 }
