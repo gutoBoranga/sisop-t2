@@ -36,7 +36,7 @@ generate_static_library:
 	@echo generating static library
 	@ar crs lib/libt2fs.a bin/t2fs.o bin/mft_manager.o bin/apidisk.o bin/bitmap2.o bin/support.o
 	
-test-main:
+main:
 	@gcc teste/main.c -I include -L lib -lt2fs -o teste/main
 	@./teste/main
 
