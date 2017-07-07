@@ -30,16 +30,21 @@ clean:
 compile_to_object_file:
 	@echo compiling object files
 	@gcc -c src/mft_manager.c -I include -o bin/mft_manager.o
+	@gcc -c src/implementation.c -I include -o bin/implementation.o
 	@gcc -c src/t2fs.c -I include -o bin/t2fs.o
 	
 generate_static_library:
 	@echo generating static library
-	@ar crs lib/libt2fs.a bin/t2fs.o bin/mft_manager.o bin/apidisk.o bin/bitmap2.o bin/support.o
+	@ar crs lib/libt2fs.a bin/t2fs.o bin/mft_manager.o bin/apidisk.o bin/bitmap2.o bin/support.o bin/implementation.o
 	
 main:
 	@gcc teste/main.c -I include -L lib -lt2fs -o teste/main
 	@./teste/main
 
-test:
+test-default:
 	@gcc teste/default.c -I include -L lib -lt2fs -o teste/default
 	@./teste/default
+	
+test:
+	@gcc teste/test.c -I include -L lib -lt2fs -o teste/test
+	@./teste/test
