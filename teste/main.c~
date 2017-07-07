@@ -29,11 +29,11 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len){
 
     strcpy(pathcpy, pathname);
     name_token = strtok(pathcpy,"/");
-    strcpy(pathPaiAtual, "/");
+    strcpy(pathPaiAtual, "");
 
     while(!found && !error){
 	tokenEqualsAtual = 0;
-        FirstFila2(&dirList);
+        FirstFila2(&dirList);		
         do{
 	    dirAtual = GetAtIteratorFila2(&dirList);
 printf("\ntoken: %s \ndirAtual: %s \npathPaiAtual: %s \n paiDiretorio: %s",name_token,dirAtual->name,pathPaiAtual,dirAtual->pai_pathname);
@@ -60,7 +60,7 @@ printf("\ntoken: %s \ndirAtual: %s \npathPaiAtual: %s \n paiDiretorio: %s",name_
             }
         }*/
         name_token = strtok(NULL, "/");
-	printf("\ntokenEqualsAtual = %d",tokenEqualsAtual);
+	printf("\ntokenEqualsAtual = %d",tokenEqualsAtual); 
         if(tokenEqualsAtual && name_token == NULL)
             found = 1;
         if(!tokenEqualsAtual){
@@ -71,35 +71,8 @@ printf("\ntoken: %s \ndirAtual: %s \npathPaiAtual: %s \n paiDiretorio: %s",name_
     return paiAtual;
 }
 
-void readEntradas(char* sector_buffer){
 
-
-    struct t2fs_record registroAux;
-    //char *sector_buffer;
-
-    //read_sector(setor, sector_buffer);
-
-
-    registroAux.TypeVal = *((BYTE *)(sector_buffer));
-    strncpy(registroAux.name, sector_buffer + 1, 51);
-    registroAux.blocksFileSize = *((DWORD *)(sector_buffer + 52));
-    registroAux.bytesFileSize = *((DWORD *)(sector_buffer + 56));
-    registroAux.MFTNumber = *((DWORD *)(sector_buffer + 60));
-
-
-    printf("\n TypeVal = %d", registroAux.TypeVal);
-    printf("\n name = %s", registroAux.name);
-    printf("\n blocksFileSize = %d", registroAux.blocksFileSize);
-    printf("\n bytesFileSize = %d", registroAux.bytesFileSize);
-    printf("\n MFTNumber = %d", registroAux.MFTNumber);
-}
-
-
-
-int main() {    //COMENTA O TESTE QUE TU NAO QUISER TESTAR
-                //OU NAO, PODE TENTAR EXECUTAR OS DOIS JUNTOS MAS NAO SEI SE DA CERTO
-
-   //TESTE DO BUSCA DIRETORIO PAI
+int main() {
   char *pathname = "/diretorio2/diretorio3/";
 
     CreateFila2(&dirList);
@@ -126,28 +99,5 @@ int main() {    //COMENTA O TESTE QUE TU NAO QUISER TESTAR
     	printf("O nome do paizao é %s", paizao->name);
     	printf("\n Nome do pai do diretorio3 : %s", dir3->pai_pathname);
     }
-
-    //TESTE DO READ ENTRADAS
-     struct t2fs_record registroTeste;
-
-    registroTeste.TypeVal = 2;
-    strcpy(registroTeste.name, "testezera");
-    registroTeste.blocksFileSize = 1;
-    registroTeste.bytesFileSize = 1;
-    registroTeste.MFTNumber = 1;
-
-    char buffer[64];
-    memcpy(buffer, &registroTeste, sizeof(registroTeste));
-    /*strcpy(buffer, (char*)registroTeste.TypeVal);
-    strcat(buffer, (char*)registroTeste.name);
-    strcat(buffer, (char*)registroTeste.blocksFileSize);
-    strcat(buffer, (char*)registroTeste.bytesFileSize);
-    strcat(buffer, (char*)registroTeste.MFTNumber);*/
-    printf("\n buffer = %s", buffer);
-
-    readEntradas(buffer);
-
-
-
     return 0;
 }
