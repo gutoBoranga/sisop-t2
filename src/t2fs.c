@@ -16,6 +16,7 @@ void initMFTBlock();
 
 struct t2fs_record *createRegister(BYTE typeVal, char name[MAX_FILE_NAME_SIZE], DWORD blocksSize, DWORD bytesSize, DWORD mftNumber);
 int path_is_valid(char *pathname, DWORD typeVal);
+int pathsAreEqual(char path1[MAX_FILE_NAME_SIZE], char path2[MAX_FILE_NAME_SIZE]);
 
 // ===== Vars =============================================================================================
 
@@ -105,8 +106,8 @@ int mkdir2 (char *pathname) {
   mftBlock.next_valid_MFTnumber ++;
   
   printf("---------- Novo registro no MFT ----------\n");
-  printf("| MFTNumber: %i\n", mftBlock.filesDescriptors[index]->record->MFTNumber);
   printf("| Nome: %s\n", mftBlock.filesDescriptors[index]->record->name);
+  printf("| MFTNumber: %i\n", mftBlock.filesDescriptors[index]->record->MFTNumber);
   printf("------------------------------------------\n\n");
 }
 
@@ -237,15 +238,6 @@ int path_is_valid(char *pathname, DWORD typeVal) {
     return 0;
   }
   
-  // se for um TYPEVAL_DIRETORIO, garante que termina com '/'
-  if (typeVal == TYPEVAL_DIRETORIO) {
-    c = pathname[strlen(pathname) - 1];
-    if (c != '/') {
-      printf("[ERRO] O path %s não termina em '/\'\n\n", pathname);
-      return 0;
-    }
-  }
-  
   strcpy(father, "/");
   
   for (i = 1; i < strlen(pathname) - 1; i ++) {
@@ -274,7 +266,31 @@ int path_is_valid(char *pathname, DWORD typeVal) {
     
     while(i < current_max) {
       // confere se já existe arquivo com aquele path
-      if(strcmp(pathname, mftBlock.filesDescriptors[i]->record->name) == 0) {
+      char descriptor_barra[strlen(mftBlock.filesDescriptors[i]->record->name) + 1], pathname_barra[strlen(pathname) + 1];
+      int pathsEqual = 0;
+      
+      // prepara possibilidades para comparar:
+      strcpy(pathname_barra, pathname);
+      strcat(pathname_barra, "/");
+  
+      strcpy(descriptor_barra, mftBlock.filesDescriptors[i]->record->name);
+      strcat(descriptor_barra, "/");
+      
+      //
+      // Exemplo: pathname (que o cara quer criar) é "/a"
+      //          descritor (que está em mft[i]) é   "/a/"
+      //
+      // Possibilidades:
+      // Original:          /a  vs /a/
+      // Pathname + '/':    /a/ vs /a/   <= AQUI VAI DESCOBRIR QUE TEM MESMO PATH
+      // Descritor + '/':   /a  vs /a//
+      //
+      pathsEqual += pathsAreEqual(pathname, mftBlock.filesDescriptors[i]->record->name);
+      pathsEqual += pathsAreEqual(pathname_barra, mftBlock.filesDescriptors[i]->record->name);
+      pathsEqual += pathsAreEqual(pathname, descriptor_barra);
+      
+      // se somou 1 em algum dos anteriores, path já existe. Retorna "false"
+      if (pathsEqual) {
         printf("[ERRO] Já existe um arquivo com o path %s\n\n", pathname);
         return 0;
       }
@@ -300,4 +316,11 @@ int path_is_valid(char *pathname, DWORD typeVal) {
     }
   }
   return 1;
+}
+
+int pathsAreEqual(char path1[MAX_FILE_NAME_SIZE], char path2[MAX_FILE_NAME_SIZE]) {
+  if (strcmp(path1, path2) == 0) {
+    return 1;
+  }
+  return 0;
 }
