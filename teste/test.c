@@ -8,22 +8,15 @@
 
 
 int main() {
-  // printf("\nIniciando Teste\n\n");
-  //
-  mkdir2("/a/");
-  mkdir2("/a");
-  mkdir2("/b");
-  mkdir2("/b/");
-  mkdir2("/c");
-  mkdir2("/c");
+  printf("\nIniciando Teste\n\n");
+
+  mkdir2("/goiaba");
+  create2("/goiaba/test");
   
-  // rmdir2("/sda");
+  create2("/arroz");
+  mkdir2("/arroz/feijao");
   
-  // mkdir2("/a/b/c");
-  // mkdir2("/aqui/");
-  // mkdir2("/aqui/tem/");
-  // mkdir2("/aqui/tem/coragem/");
-  // mkdir2("/pao/com/chimia");
-  
+  create2("/arroz/feijao/bla");
+    
   return 0;
 }

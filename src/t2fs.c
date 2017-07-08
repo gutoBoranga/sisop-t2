@@ -29,10 +29,41 @@ int mft_filesDescriptors_max_size = MFT_BLOCK_SIZE - NUM_SPECIAL_RECORDS;
 // ===== API functions =====================================================================================
 
 FILE2 create2 (char *filename) {
-  if  (!has_initialized) {
+  if (!has_initialized) {
     init_blocks();
     has_initialized = 1;
   }
+  
+  if (!path_is_valid(filename, TYPEVAL_REGULAR)) {
+    return -1;
+  }
+  
+  // cria novo registro t2fs
+  struct t2fs_record *new_record;
+  
+  new_record = createRegister(TYPEVAL_REGULAR, filename, 1, 0, mftBlock.next_valid_MFTnumber);
+  
+  // salvar no disco
+  
+  
+  // cria novo mft_record no mft_manager
+  mft_record *mft_rec;
+  mft_rec = malloc(sizeof(mft_record));
+  mft_rec->record = new_record;
+  
+  mft_rec->tuplas[0] = createTupla(0, 0, 0, 0); // tem que ver estes parametros
+  
+  // adiciona no array de registros do mtfBlock
+  int index = mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS;
+  mftBlock.filesDescriptors[index] = mft_rec;
+  
+  mftBlock.next_valid_MFTnumber ++;
+  
+  printf("---------- Novo registro no MFT ----------\n");
+  printf("| Nome: %s\n", mftBlock.filesDescriptors[index]->record->name);
+  printf("| MFTNumber: %i\n", mftBlock.filesDescriptors[index]->record->MFTNumber);
+  printf("| Type: regular\n");
+  printf("------------------------------------------\n\n");
 }
 
 
@@ -108,6 +139,7 @@ int mkdir2 (char *pathname) {
   printf("---------- Novo registro no MFT ----------\n");
   printf("| Nome: %s\n", mftBlock.filesDescriptors[index]->record->name);
   printf("| MFTNumber: %i\n", mftBlock.filesDescriptors[index]->record->MFTNumber);
+  printf("| Type: diretorio\n");
   printf("------------------------------------------\n\n");
 }
 
@@ -238,6 +270,15 @@ int path_is_valid(char *pathname, DWORD typeVal) {
     return 0;
   }
   
+  // se for arquivo regular, garante que path não termina em '/'
+  if (typeVal == TYPEVAL_REGULAR) {
+    c = pathname[strlen(pathname) - 1];
+    if (c == '/') {
+      printf("[ERRO] Um nome de arquivo não pode terminar com '/\'\n       Nome: %s\n\n", pathname);
+      return 0;
+    }
+  }
+  
   strcpy(father, "/");
   
   for (i = 1; i < strlen(pathname) - 1; i ++) {
@@ -269,22 +310,12 @@ int path_is_valid(char *pathname, DWORD typeVal) {
       char descriptor_barra[strlen(mftBlock.filesDescriptors[i]->record->name) + 1], pathname_barra[strlen(pathname) + 1];
       int pathsEqual = 0;
       
-      // prepara possibilidades para comparar:
       strcpy(pathname_barra, pathname);
       strcat(pathname_barra, "/");
   
       strcpy(descriptor_barra, mftBlock.filesDescriptors[i]->record->name);
       strcat(descriptor_barra, "/");
       
-      //
-      // Exemplo: pathname (que o cara quer criar) é "/a"
-      //          descritor (que está em mft[i]) é   "/a/"
-      //
-      // Possibilidades:
-      // Original:          /a  vs /a/
-      // Pathname + '/':    /a/ vs /a/   <= AQUI VAI DESCOBRIR QUE TEM MESMO PATH
-      // Descritor + '/':   /a  vs /a//
-      //
       pathsEqual += pathsAreEqual(pathname, mftBlock.filesDescriptors[i]->record->name);
       pathsEqual += pathsAreEqual(pathname_barra, mftBlock.filesDescriptors[i]->record->name);
       pathsEqual += pathsAreEqual(pathname, descriptor_barra);
@@ -296,12 +327,19 @@ int path_is_valid(char *pathname, DWORD typeVal) {
       }
       
       // confere se o diretório pai existe
-      if(strcmp(father, mftBlock.filesDescriptors[i]->record->name) == 0) {
+      pathsEqual = 0;
+      
+      pathsEqual += pathsAreEqual(father, mftBlock.filesDescriptors[i]->record->name);
+      pathsEqual += pathsAreEqual(father, descriptor_barra);
+      
+      // se achou um path igual ao do father E for um diretorio, marca flag
+      if (mftBlock.filesDescriptors[i]->record->TypeVal == TYPEVAL_DIRETORIO && pathsEqual) {
         dir_pai_existe = 1;
       }
       
       i++;
     }
+    
     // se não achou o diretório pai, retorna "false"
     if (!dir_pai_existe) {
       printf("[ERRO] Não existe estrutura de diretório %s\n\n", father);
