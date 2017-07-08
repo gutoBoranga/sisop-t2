@@ -39,9 +39,14 @@ int main() {
   rmdir2("/arroz");
   
   create2("/batata/assada");
-  mkdir2("/algo");
+  create2("/algo");
   mkdir2("/meu-compiuter");
   
+  delete2("i23h2");
+  delete2("/algo");
+  delete2("/a/b/c/");
+  
+  create2("/meu-compiuter/um-arquivo");
   // open2 printa a lista de registros na mft por enquanto
   open2("/");
     
