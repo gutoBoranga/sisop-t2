@@ -26,5 +26,6 @@ typedef struct diretorio {
 // functions declaration
 
 DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len, FILA2 dirList);
-void readEntradas(char* sector_buffer);
+int readEntradas(int dirByteSize, PFILA2 entradasList);
+char* readBlock(int sectorNumber);
 int printaDiretoriosLista(FILA2 fila);
