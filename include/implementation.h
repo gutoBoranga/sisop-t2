@@ -14,6 +14,7 @@
 typedef struct t2fs_record registro_dir;
 
 typedef struct diretorio {
+	DIR2 handle;
     char* name;
     char* pai_pathname;
     int current_entry;
@@ -23,11 +24,25 @@ typedef struct diretorio {
     FILA2 entradas;
 } DIRETORIO;
 
+typedef struct arquivo {
+	FILE2 handle;
+	char* name;
+	char* pai_pathname;
+	int current_pointer;
+	int MFTNumber;
+	int blockSize;
+	int byteSize;
+} ARQUIVO;
+
+FILA2 dirList;
 
 
 // functions declaration
 
-DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len, FILA2 dirList);
+DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len);
+DIRETORIO* getDiretorio(DIR2 handle);
+registro_dir* getEntrada(DIRETORIO *dir);
 int readEntradas(int dirByteSize, PFILA2 entradasList);
 int readBlock(int sectorNumber, unsigned char buffer[BLOCK_SIZE]);
+int writeBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]);
 int printaDiretoriosLista(FILA2 fila);

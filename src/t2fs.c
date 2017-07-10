@@ -352,7 +352,19 @@ DIR2 opendir2 (char *pathname) {
 #define	END_OF_DIR	1
 
 int readdir2 (DIR2 handle, DIRENT2 *dentry) {
-  
+	DIRETORIO *dir = getDiretorio(handle);
+	if(dir == NULL)
+		return -2;
+
+	registro_dir *entrada = getEntrada(dir); 
+	if(entrada == NULL)
+		return -END_OF_DIR;
+
+	strncpy(dentry->name, entrada->name, 51);
+	dentry->fileType = entrada->TypeVal;
+	dentry->fileSize = entrada->bytesFileSize;
+	
+	return 0;
 }
 
 

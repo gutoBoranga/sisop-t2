@@ -22,7 +22,7 @@ Retorna: DIRETORIO* --Ponteiro para a struct do diretório pai se encontrou
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len, FILA2 dirList) {
+DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) { //mudar dirList para uma variavel global
     DIRETORIO *paiAtual, *dirAtual;
     registro_dir *entradaAtual;
     char pathcpy[pathname_len], pathPaiAtual[pathname_len];
@@ -41,7 +41,7 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len, FILA2 dirList) {
 	     tokenEqualsAtual = 0;
        FirstFila2(&dirList);
        do {
-         dirAtual = GetAtIteratorFila2(&dirList);
+         dirAtual = (DIRETORIO *) GetAtIteratorFila2(&dirList);
          printf("\ntoken: %s \ndirAtual: %s \npathPaiAtual: %s \npaiDiretorio: %s\n",name_token,dirAtual->name,pathPaiAtual,dirAtual->pai_pathname);
          if(strcmp(name_token, dirAtual->name) == 0)
               if(strcmp(pathPaiAtual, dirAtual->pai_pathname) == 0) {
@@ -82,16 +82,60 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len, FILA2 dirList) {
 }
 
 /*----------------------------------------------------------------------------------------------
+Função que busca um diretório a partir de seu handle na lista de diretórios abertos.
+
+
+Retorna: DIRETORIO* --Ponteiro para a struct do diretório se encontrou
+	 	 NULL 		--Caso contrário
+
+GABRIEL JOB
+----------------------------------------------------------------------------------------------*/
+DIRETORIO* getDiretorio(DIR2 handle){ //mudar dirList para uma variavel global
+	DIRETORIO *dirAtual;
+
+	if(FirstFila2(&dirList) == 0){
+		do{
+			dirAtual = (DIRETORIO *) GetAtIteratorFila2(&dirList);
+			if(dirAtual->handle == handle)
+				return dirAtual;
+		}while(NextFila2(&dirList) == 0);
+	}
+	return NULL;		
+}
+
+/*----------------------------------------------------------------------------------------------
+Função que diz onde está no disco o próximo bloco do arquivo a ser acessado.
+
+
+PS.: Provavelmente é uma boa usar como parâmetro o último bloco já acessado
+----------------------------------------------------------------------------------------------*/
+registro_dir* getEntrada(DIRETORIO *dir){
+	registro_dir *registroAtual;	
+	int i;	
+
+	if(FirstFila2(&dir->entradas) == 0){
+		for(i = 0; i < dir->current_entry; i++){
+			if(NextFila2(&dir->entradas) != 0)
+				return NULL;
+		}
+		registroAtual = (registro_dir *) GetAtIteratorFila2(&dir->entradas);
+		dir->current_entry = dir->current_entry + 1;
+		return registroAtual;
+	}
+	return NULL;
+}
+
+/*----------------------------------------------------------------------------------------------
 Função para ler as entradas de um diretório do disco.
 
 
 Retorna: 0  --Se entradas lidas com sucesso
-	 -1 --Caso houve erro na leitura
+	 	-1  --Caso houve erro na leitura
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
 int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD COMO PARAMETRO
-	/*struct t2fs_record *registroAux;		
+	struct t2fs_record *registroAux;		
 	unsigned char blocoAtual[BLOCK_SIZE];	
 	int i, offset = 0;	
 
@@ -103,17 +147,17 @@ int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD 
 		offset = 0;
 
 		if(dirByteSize >= BLOCK_SIZE)
-			i = BLOC_SIZE;
+			i = BLOCK_SIZE;
 		else
 			i = dirByteSize;
 		while(i>0){			
 			registroAux = malloc(sizeof(struct t2fs_record));
 
 			registroAux->TypeVal = *((BYTE *)(blocoAtual + offset));
-    			strncpy(registroAux->name, blocoAtual + offset + 1, 51);
-    			registroAux->blocksFileSize = *((DWORD *)(blocoAtual + offset + 52));
-    			registroAux->bytesFileSize = *((DWORD *)(blocoAtual + offset + 56));
-    			registroAux->MFTNumber = *((DWORD *)(blocoAtual +offset + 60));
+   			strncpy(registroAux->name, blocoAtual + offset + 1, 51);
+   			registroAux->blocksFileSize = *((DWORD *)(blocoAtual + offset + 52));
+   			registroAux->bytesFileSize = *((DWORD *)(blocoAtual + offset + 56));
+   			registroAux->MFTNumber = *((DWORD *)(blocoAtual +offset + 60));
 
 			offset += 64;
 			dirByteSize -= 64;
@@ -121,7 +165,7 @@ int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD 
 			AppendFila2(entradasList, registroAux);
 		}
 		blocoAtualNumber = getBlockFromMFT();
-	}*/
+	}
 	return 0;
 }
 
@@ -130,8 +174,8 @@ Função que diz onde está no disco o próximo bloco do arquivo a ser acessado.
 
 PS.: Provavelmente é uma boa usar como parâmetro o último bloco já acessado
 ----------------------------------------------------------------------------------------------*/
-int getBlockFromMFT(mft_record registro, int blocoAtual){ //recebo VBN ou LBN?
-	struct t2fs_4tupla tuplaAtual;
+int getBlockFromMFT(/*mft_record registro, int blocoAtual*/){ //recebo VBN ou LBN?
+	/*struct t2fs_4tupla tuplaAtual;
 	int LBN_encontrado = -1;
 	int dif;
 
@@ -145,7 +189,7 @@ int getBlockFromMFT(mft_record registro, int blocoAtual){ //recebo VBN ou LBN?
 	  }	
 	}
 	
-	return LBN_encontrado;
+	return LBN_encontrado;*/
 }
 
 /*----------------------------------------------------------------------------------------------
