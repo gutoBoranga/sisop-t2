@@ -5,6 +5,7 @@
 #include <t2fs.h>
 #include <support.h>
 #include <implementation.h>
+#include <mft_manager.h>
 
 // functions
 
@@ -89,29 +90,38 @@ Retorna: 0  --Se entradas lidas com sucesso
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-int readEntradas(int dirByteSize, PFILA2 entradasList) {
-	struct t2fs_record *registroAux;
-	char *blocoAtual;	
-	int i;	
+int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD COMO PARAMETRO
+	/*struct t2fs_record *registroAux;		
+	unsigned char blocoAtual[BLOCK_SIZE];	
+	int i, offset = 0;	
 
-	int blocoAtualNumber = getBlockFromMFT(); //criar getBlockFromMFT(), cabeçalho abaixo VVV
+	int blocoAtualNumber = getBlockFromMFT(); //mudar
 	while(blocoAtualNumber > 0){
-		blocoAtual = readBlock(blocoAtualNumber);
-		if(blocoAtual == NULL)
+		if(readBlock(blocoAtualNumber, blocoAtual) != 0)
 			return -1;
-		for(i = dirByteSize; i>0; i = i - 64){ //tamanho t2fs_record=512
+
+		offset = 0;
+
+		if(dirByteSize >= BLOCK_SIZE)
+			i = BLOC_SIZE;
+		else
+			i = dirByteSize;
+		while(i>0){			
 			registroAux = malloc(sizeof(struct t2fs_record));
 
-			registroAux->TypeVal = *((BYTE *)(blocoAtual));
-    			strncpy(registroAux->name, blocoAtual + 1, 51);
-    			registroAux->blocksFileSize = *((DWORD *)(blocoAtual + 52));
-    			registroAux->bytesFileSize = *((DWORD *)(blocoAtual + 56));
-    			registroAux->MFTNumber = *((DWORD *)(blocoAtual + 60));
+			registroAux->TypeVal = *((BYTE *)(blocoAtual + offset));
+    			strncpy(registroAux->name, blocoAtual + offset + 1, 51);
+    			registroAux->blocksFileSize = *((DWORD *)(blocoAtual + offset + 52));
+    			registroAux->bytesFileSize = *((DWORD *)(blocoAtual + offset + 56));
+    			registroAux->MFTNumber = *((DWORD *)(blocoAtual +offset + 60));
 
+			offset += 64;
+			dirByteSize -= 64;
+			i -= 64;
 			AppendFila2(entradasList, registroAux);
 		}
 		blocoAtualNumber = getBlockFromMFT();
-	}
+	}*/
 	return 0;
 }
 
@@ -120,31 +130,66 @@ Função que diz onde está no disco o próximo bloco do arquivo a ser acessado.
 
 PS.: Provavelmente é uma boa usar como parâmetro o último bloco já acessado
 ----------------------------------------------------------------------------------------------*/
-int getBlockFromMFT(){
+int getBlockFromMFT(mft_record registro, int blocoAtual){ //recebo VBN ou LBN?
+	struct t2fs_4tupla tuplaAtual;
+	int LBN_encontrado = -1;
+	int dif;
+
+	int i;
+	for(i = 0; i < NUM_TUPLAS; i++){
+	  tuplaAtual = registro.tuplas[i]; //testar se a tuplaAtual é valida antes
+	  if(tuplaAtual.virtualBlockNumber <= blocoAtual){
+	  	if((tuplaAtual.virtualBlockNumber + tuplaAtual.numberOfContiguosBlocks - 1) >= blocoAtual)
+			dif = blocoAtual - tuplaAtual.virtualBlockNumber;
+			LBN_encontrado = tuplaAtual.virtualBlockNumber + dif;
+	  }	
+	}
+	
+	return LBN_encontrado;
+}
+
+/*----------------------------------------------------------------------------------------------
+Função que lê o bloco de um determinado setor do disco para o buffer recebido com parâmetro.
+
+Retorna: 0  --Se lido com sucesso
+	 	-1  --Caso houve erro na leitura
+
+GABRIEL JOB
+----------------------------------------------------------------------------------------------*/
+int readBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]){
+	int i;
+	int bytesLidos = 0;
+	unsigned char sectorBuffer[SECTOR_SIZE];
+
+	for(i=0; i<SECTORS_PER_BLOCK; i++){
+		if(read_sector(sectorNumber + i, sectorBuffer) != 0)
+			return -1;
+		memcpy(blockBuffer + bytesLidos, sectorBuffer, SECTOR_SIZE);
+		bytesLidos = bytesLidos + SECTOR_SIZE;
+	}
 	return 0;
 }
 
 /*----------------------------------------------------------------------------------------------
-Função para ler um bloco inteiro do disco.
+Função que escreve o bloco passado como parâmetro num determinado setor do disco.
 
-Retorna: char* --Bytes lidos se lido com sucesso
-	 NULL  --Caso houve erro na leitura
+Retorna: 0  --Se escrito com sucesso
+		-1  --Caso houve falha na escrita
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-char* readBlock(int sectorNumber){
+int writeBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]){
 	int i;
-	int bytesLidos = 0;
-	char *sectorBuffer;
-	char *blockBuffer;
-
+	int bytesEscritos = 0;
+	unsigned char sectorBuffer[SECTOR_SIZE];
+	
 	for(i=0; i<SECTORS_PER_BLOCK; i++){
-		if(read_sector(sectorNumber + i, sectorBuffer) != 0)
-			return NULL;
-		memcpy(blockBuffer + bytesLidos, sectorBuffer, SECTOR_SIZE);
-		bytesLidos = bytesLidos + SECTOR_SIZE;
+		memcpy(sectorBuffer, blockBuffer + bytesEscritos, SECTOR_SIZE);
+		if(write_sector(sectorNumber + i, sectorBuffer) != 0)
+			return -1;
+		bytesEscritos = bytesEscritos + SECTOR_SIZE;
 	}
-	return blockBuffer;
+	return 0;
 }
 
 
@@ -167,3 +212,6 @@ int printaDiretoriosLista(FILA2 fila) {
   }
   printf("]\n");
 }
+
+
+

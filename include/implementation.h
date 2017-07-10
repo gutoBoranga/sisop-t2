@@ -7,6 +7,7 @@
 
 #define SECTOR_SIZE 256
 #define SECTORS_PER_BLOCK 4
+#define BLOCK_SIZE SECTOR_SIZE*SECTORS_PER_BLOCK
 
 // structs
 
@@ -23,9 +24,10 @@ typedef struct diretorio {
 } DIRETORIO;
 
 
+
 // functions declaration
 
 DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len, FILA2 dirList);
 int readEntradas(int dirByteSize, PFILA2 entradasList);
-char* readBlock(int sectorNumber);
+int readBlock(int sectorNumber, unsigned char buffer[BLOCK_SIZE]);
 int printaDiretoriosLista(FILA2 fila);

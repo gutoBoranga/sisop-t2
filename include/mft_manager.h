@@ -1,4 +1,5 @@
 #include <t2fs.h>
+#include <support.h>
 
 #define MFT_BLOCK_SIZE 0x0800
 #define NUM_TUPLAS 32
@@ -8,6 +9,14 @@
 #define MFT_RECORD_INVALID 0
 
 // === Structs ===============
+
+typedef struct registro_mft_TEMPORARIO { //TEMPORARIA
+	//struct 	t2fs_4tupla tuplas;
+	FILA2 tuplas;
+
+}reg_MFT;
+
+FILA2 area_MFT; //fila de reg_MFT's
 
 typedef struct t2fs_mft_record {
   int valid;
@@ -40,3 +49,6 @@ di_node* removeFirstDInode(di_node *head);
 
 struct t2fs_4tupla createTupla(DWORD atributeType, DWORD vbn, DWORD lbn, DWORD contiguosBlocks);
 void print_the_sound_of_a_capybara();
+
+int boot_area_MFT (PFILA2 area_MFT);
+void print_area_MFT(PFILA2 area_MFT);
