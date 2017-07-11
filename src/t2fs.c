@@ -27,6 +27,8 @@ void printDeletedIndexesList();
 struct t2fs_bootBlock bootBlock;
 struct t2fs_mftBlock mftBlock;
 
+FILA2 areaMFT; // nosso novo mft
+
 int has_initialized = 0;
 int mft_filesDescriptors_max_size = MFT_BLOCK_SIZE - NUM_SPECIAL_RECORDS;
 
@@ -185,7 +187,10 @@ FILE2 open2 (char *filename) {
 
 
 int close2 (FILE2 handle) {
-  
+  if (!has_initialized) {
+    init_blocks();
+    has_initialized = 1;
+  }
 }
 
 
@@ -224,110 +229,51 @@ int mkdir2 (char *pathname) {
     return -1;
   }
   
-  char dir[MAX_FILE_NAME_SIZE], subdir[MAX_FILE_NAME_SIZE], subdir_copy[MAX_FILE_NAME_SIZE], *token;
-  const char s[2] = "/";
+  reg_MFT *novo_regMFT;
+	novo_regMFT = (reg_MFT *) malloc(sizeof(reg_MFT));
+  
+	CreateFila2(&novo_regMFT->tuplas);
+  
+  struct 	t2fs_4tupla *tuplaAtual;
+  
+  // cria as 32 tuplas do registro
+  int i;
+  for(i = 0; i < 32; i++) {
+    tuplaAtual = createTuplaPointer(0, 0, 0, 0);
+    AppendFila2(&novo_regMFT->tuplas, tuplaAtual);
+  }
+  // adiciona na fila de mft_regs
+  AppendFila2(&area_MFT, &novo_regMFT->tuplas);
+  
+  // pega registro do root no mft
+  FirstFila2(&area_MFT);
+  NextFila2(&area_MFT);
+  
+  reg_MFT *root;
+	root = (reg_MFT *) malloc(sizeof(reg_MFT));
+  root = GetAtIteratorFila2(&area_MFT);
+  
   FILA2 entradas;
-  
   CreateFila2(&entradas);
-  strcpy(dir, "/");
   
-  // pega o primeiro subdir de "/"
-  strcpy(subdir, strtok(pathname, s));
+  // pega entradas
+  int result = readEntradas2(root->tuplas, &entradas);
   
-  int can_make_dir = 0;
+  FirstFila2(&entradas);
   
-  // percorre todos subdiretórios do path
-  while(subdir != NULL && !can_make_dir) {
-    // coloca em na fila entradas os registros do dir atual
-    if (readEntradas2(mftBlock.root, &entradas) != 0) {
-      printf("[ERRO] Erro ao tentar criar %s\n\n", pathname);
-      return -1;
-    }
-    
-    // se erro ao ler registro das entradas, já retorna -1
-    if (FirstFila2(&entradas) != 0) {
-      printf("[ERRO] Erro ao ler registro nas entradas\n\n");
-      return -1;
-    }
-    // pega o primeiro registro
-    struct t2fs_record *record;
-    record = GetAtIteratorFila2(&entradas);
-    
-    int found_subdir = 0;
-    int should_tokenize = 1;
-    
-    // se diretório nao tem entradas ainda
-    if (record == NULL) {
-      strcpy(subdir_copy, subdir);
-      
-      strcpy(subdir, strtok(NULL, s));
-      
-      // se for o último subdiretório do path e pai ainda não tem entradas
-      // quer dizer que pode criar diretorio
-      if (subdir == NULL) {
-        found_subdir = 1;
-        can_make_dir = 1;
-        
-      // mas se nao tem entradas e deveria ter um dir intermediario => erro
-      } else {
-        printf("[ERRO] Não existem diretórios intermediários\n\n");
-        return -1;
-      }
-    }
-    
-    // percorre todas entradas do diretorio
-    while (record != NULL && !found_subdir) {
-      strcpy(subdir_copy, subdir);
-      
-      strcpy(subdir, strtok(NULL, s));
-      should_tokenize = 0;
-      
-      // se encontrou o registro de mesmo nome do subdir que está conferindo
-      if (strcmp(record->name, subdir) == 0) {
-        // se subdir é o último dir do pathname solicitado,
-        // significa que já existe um record com este path absoluto
-        if (subdir == NULL) {
-          printf("[ERRO] Já existe algo com esse nome\n\n");
-          return -1;
-          
-        // se não for, quer dizer que até agora o pai existe e vai continuar buscando no laço de fora
-        } else {
-          found_subdir = 1;
-          strcpy(dir, subdir_copy);
-        }
-        
-      // se não encontrou o registro com nome igual ao subdir que está conferindo
-      } else {
-        // se este é o path final que quero criar, marca flag dizendo que estrutura de subdiretórios está ok e não existe nada com este path absoluto
-        if (subdir == NULL) {
-          can_make_dir = 1;
-        }
-      }
-      NextFila2(&entradas);
-      record = GetAtIteratorFila2(&entradas);
-    }
-    
-    // se percorreu todas entradas e não achou subdiretório lá, deu erro
-    if (!found_subdir) {
-      printf("[ERRO] Não existe diretório pai, avô ou outro\n\n");
-      return -1;
-    }
-    
-    printf("%s\n", subdir);
-    if (should_tokenize) {
-      strcpy(subdir, strtok(NULL, s));
-    }
+  // pega o primeiro registro (se houver)
+  struct t2fs_record *record;
+  record = malloc(sizeof(struct t2fs_record));
+  record = GetAtIteratorFila2(&entradas);
+  
+  // vê se tem registro
+  if (record != NULL) {
+    printf("%s\n", record->name);
+  } else {
+    printf("Record NULL\n");
   }
-  
-  // se percorreu todo o path e não marcou flag que pode criar, deu erro
-  if (!can_make_dir) {
-    printf("[ERRO] Erro ao criar diretório\n\n");
-    return -1;
-  }
-  
-  printf("Finalmente vou criar o dir: %s. Seu pai é: %s\n", subdir_copy, dir);
-  
-  // AQUI DEVE CRIAR ENTRADA NO DIRETORIO PAI
+
+  // aqui teremos que tentar escrever
 
   return(0);
 }
@@ -476,6 +422,13 @@ void initBootBlock() {
 }
 
 void initMFTBlock() {
+	FILA2 areaMFT_2;
+
+	if(CreateFila2(&area_MFT) == 0){
+		boot_area_MFT(&area_MFT);
+  }
+  
+  
   mftBlock.next_valid_MFTnumber = 0;
   
   mftBlock.deleted_indexes = NULL;

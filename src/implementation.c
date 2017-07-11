@@ -179,10 +179,15 @@ int readEntradas2(FILA2 tuplas, PFILA2 entradasList) {
   struct t2fs_4tupla *tuplaAtual;
   tuplaAtual = GetAtIteratorFila2(&tuplas);
   
+  if(tuplaAtual == NULL) {
+    printf("Tupla NULL\n");
+  }
+  
   // percorre todas tuplas
   while (tuplaAtual != NULL) {
     // se não for uma "tupla de mapeamento VBN-LBN"
     if (tuplaAtual->atributeType != 1) {
+      printf("Tupla ñ é vbn-lbn\n");
       // se for um registro livre
       if (tuplaAtual->atributeType == -1) {
         printf("atributeType -1: Registro no mft livre\n\n");
@@ -192,7 +197,7 @@ int readEntradas2(FILA2 tuplas, PFILA2 entradasList) {
       // neste caso, já deve ter colocado na lista todos os registros, então retorna 0
       return 0;
     }
-    
+    printf("Tupla é vbn-lbn!!\n");
     int i, j, k;
     i = j = k = 0;
     

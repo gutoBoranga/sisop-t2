@@ -42,20 +42,6 @@ void testeTuplas() {
 }
 
 int main(){
-	// unsigned char sectorBuffer[SECTOR_SIZE];
-	// unsigned char id[0];
-	//
-	// if(read_sector(1, sectorBuffer) != 0) {
-	// 	printf("erro\n");
-	// }
-	//
-	// int i;
-	// // lê id
-	// for (i = 0; i < SECTOR_SIZE; i ++) {
-	// 	BYTE byteLido = sectorBuffer[i];
-	// 	printf("%d\n", byteLido);
-	// }
-	
 	struct t2fs_4tupla* tupla;
 	
 	// readTupla(6, 0, tupla);

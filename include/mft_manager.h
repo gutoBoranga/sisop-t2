@@ -58,3 +58,5 @@ void print_the_sound_of_a_capybara();
 
 int boot_area_MFT (PFILA2 area_MFT);
 void print_area_MFT(PFILA2 area_MFT);
+
+struct t2fs_4tupla *createTuplaPointer(DWORD atributeType, DWORD vbn, DWORD lbn, DWORD contiguosBlocks);
