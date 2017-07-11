@@ -267,7 +267,7 @@ int mkdir2 (char *pathname) {
     
     // se achou o registro mft do dir atual
     } else {
-      // lê suas entradas
+      // lê suas entrada
       readEntradas2(dir->tuplas, &entradas);
       FirstFila2(&entradas);
       
@@ -287,12 +287,6 @@ int mkdir2 (char *pathname) {
           if (token == NULL) {
             printf("[ERRO] Já existe um diretorio com este path\n\n");
             return -1;
-          }
-        } else {
-          // neste caso, é o último dir do path e não existe entrada com mesmo nome no diretório pai
-          // logo, pode criar
-          if (token == NULL) {
-            can_make_dir = 1;
           }
         }
         
