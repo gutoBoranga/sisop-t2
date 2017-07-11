@@ -68,9 +68,9 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) { //mudar dirList
         name_token = strtok(NULL, "/");
 	      printf("\ntokenEqualsAtual = %d",tokenEqualsAtual);
         if(tokenEqualsAtual){
-		if(name_token == NULL) 
+		if(name_token == NULL)
 			found = 1;
-		else 
+		else
 			paiAtual = dirAtual;
 	}
         if(!tokenEqualsAtual){
@@ -100,7 +100,7 @@ DIRETORIO* getDiretorio(DIR2 handle){ //mudar dirList para uma variavel global
 				return dirAtual;
 		}while(NextFila2(&dirList) == 0);
 	}
-	return NULL;		
+	return NULL;
 }
 
 /*----------------------------------------------------------------------------------------------
@@ -110,8 +110,8 @@ Função que diz onde está no disco o próximo bloco do arquivo a ser acessado.
 PS.: Provavelmente é uma boa usar como parâmetro o último bloco já acessado
 ----------------------------------------------------------------------------------------------*/
 registro_dir* getEntrada(DIRETORIO *dir){
-	registro_dir *registroAtual;	
-	int i;	
+	registro_dir *registroAtual;
+	int i;
 
 	if(FirstFila2(&dir->entradas) == 0){
 		for(i = 0; i < dir->current_entry; i++){
@@ -135,9 +135,9 @@ Retorna: 0  --Se entradas lidas com sucesso
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
 int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD COMO PARAMETRO
-	struct t2fs_record *registroAux;		
-	unsigned char blocoAtual[BLOCK_SIZE];	
-	int i, offset = 0;	
+	struct t2fs_record *registroAux;
+	unsigned char blocoAtual[BLOCK_SIZE];
+	int i, offset = 0;
 
 	int blocoAtualNumber = getBlockFromMFT(); //mudar
 	while(blocoAtualNumber > 0){
@@ -150,7 +150,7 @@ int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD 
 			i = BLOCK_SIZE;
 		else
 			i = dirByteSize;
-		while(i>0){			
+		while(i>0){
 			registroAux = malloc(sizeof(struct t2fs_record));
 
 			registroAux->TypeVal = *((BYTE *)(blocoAtual + offset));
@@ -167,6 +167,61 @@ int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD 
 		blocoAtualNumber = getBlockFromMFT();
 	}
 	return 0;
+}
+
+int readEntradas2(FILA2 tuplas, PFILA2 entradasList) {
+  if (FirstFila2(&tuplas) != 0) {
+    printf("[ERRO] Erro ao ler entradas: fila de tuplas vazia\n\n");
+    return -1;
+  }
+  
+  // pega tupla inicial do arquivo
+  struct t2fs_4tupla *tuplaAtual;
+  tuplaAtual = GetAtIteratorFila2(&tuplas);
+  
+  // percorre todas tuplas
+  while (tuplaAtual != NULL) {
+    // se não for uma "tupla de mapeamento VBN-LBN"
+    if (tuplaAtual->atributeType != 1) {
+      // se for um registro livre
+      if (tuplaAtual->atributeType == -1) {
+        printf("atributeType -1: Registro no mft livre\n\n");
+        return -1;
+      }
+      // se não, ou é registro MFT adicional ou é marcador de fim de encadeamento
+      // neste caso, já deve ter colocado na lista todos os registros, então retorna 0
+      return 0;
+    }
+    
+    int i, j, k;
+    i = j = k = 0;
+    
+    // percorre todos blocos contíguos da tupla
+    for(i = 0; i < tuplaAtual->numberOfContiguosBlocks; i++) {
+      int block = tuplaAtual->logicalBlockNumber + i;
+      
+      // percorre todos setores do bloco
+      for(j = 0; j < SECTORS_PER_BLOCK; j++) {
+        int sector = block * SECTORS_PER_BLOCK + j;
+        
+        // percorre todos registros do setor
+        for(k = 0; k < RECORDS_PER_SECTOR; k++) {
+          struct t2fs_record *record = malloc(sizeof(struct t2fs_record));
+          
+          if (readRecord(sector, k, record) != 0) {
+            printf("[ERRO] Erro ao criar registro a partir das tuplas\n\n");
+            return -1;
+          }
+          
+          // se tudo ok, coloca registro na fila
+          AppendFila2(entradasList, record);
+        }
+      }
+    }
+    NextFila2(&tuplas);
+    tuplaAtual = GetAtIteratorFila2(&tuplas);
+  }
+  return 0;
 }
 
 /*----------------------------------------------------------------------------------------------
@@ -186,7 +241,7 @@ int getBlockFromMFT(/*mft_record registro, int blocoAtual*/){ //recebo VBN ou LB
 	  	if((tuplaAtual.virtualBlockNumber + tuplaAtual.numberOfContiguosBlocks - 1) >= blocoAtual)
 			dif = blocoAtual - tuplaAtual.virtualBlockNumber;
 			LBN_encontrado = tuplaAtual.virtualBlockNumber + dif;
-	  }	
+	  }
 	}
 	
 	return LBN_encontrado;*/
@@ -257,5 +312,40 @@ int printaDiretoriosLista(FILA2 fila) {
   printf("]\n");
 }
 
+int readRecord(int sector, int position_in_sector, struct t2fs_record* record) {
+    unsigned char buffer_sector[SECTOR_SIZE];
 
+    if (read_sector(sector, buffer_sector) != 0) {
+        printf("[ERRO] Erro ao ler setor %i\n", sector);
+        return -1;
+    }
 
+    // Lê registro
+    memcpy(&record->TypeVal, &buffer_sector[position_in_sector * 64], sizeof(record->TypeVal));
+    memcpy(&record->name, &buffer_sector[(position_in_sector * 64) + 1], sizeof(record->name));
+    memcpy(&record->blocksFileSize, &buffer_sector[(position_in_sector * 64) + 52], sizeof(record->blocksFileSize));
+    memcpy(&record->bytesFileSize, &buffer_sector[(position_in_sector * 64) + 56], sizeof(record->bytesFileSize));
+    memcpy(&record->MFTNumber, &buffer_sector[(position_in_sector * 64) + 60], sizeof(record->MFTNumber));
+
+    return 0;
+}
+
+// salva no ponteiro tupla o que for lido do disco
+int readTupla(int sector, int position_in_sector, struct t2fs_4tupla* tupla) {
+    unsigned char buffer_sector[SECTOR_SIZE];
+    
+    if (read_sector(sector, buffer_sector) != 0) {
+        printf("[ERRO] Erro ao ler setor %i\n", sector);
+        return -1;
+    }
+    
+    BYTE t[TUPLA_SIZE];
+    
+    int i;
+    for(i = 0; i < TUPLA_SIZE; i++) {
+      t[i] = buffer_sector[(TUPLA_SIZE * position_in_sector) + i];
+      printf("%i\n", t[i]);
+    }
+
+    return 0;
+}

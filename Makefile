@@ -17,6 +17,7 @@ SRC_DIR=./src
 all: clean compile_to_object_file generate_static_library
 
 clean:
+	@clear
 	@echo cleaning bin/ and lib/
 	@cp bin/apidisk.o lib/
 	@cp bin/bitmap2.o lib/
@@ -48,3 +49,7 @@ test-default:
 test:
 	@gcc teste/test.c -I include -L lib -lt2fs -o teste/test
 	@./teste/test
+
+mft:
+	@gcc teste/testMFT.c -I include -L lib -lt2fs -o teste/testMFT
+	@./teste/testMFT

@@ -32,6 +32,12 @@ typedef struct deleted_index_node {
 struct t2fs_mftBlock {		// Tabela 1 � Descri��o dos campos do bloco de boot
   int next_valid_MFTnumber;             // número de registros válidos
 	
+	FILA2 bitmap;  // registro 0: descritor do arquivo que fornece o bitmap de blocos de dados livres e ocupados;
+  FILA2 root;    // registro 1: descritor do arquivo associado ao diretório raiz;
+  FILA2 d2;           // registro 2: reservado para uso futuro
+  FILA2 d3;           // registro 3: reservado para uso futuro
+  FILA2 files; // outros registros
+	
   mft_record bitmapDescriptor;  // registro 0: descritor do arquivo que fornece o bitmap de blocos de dados livres e ocupados;
   mft_record rootDescriptor;    // registro 1: descritor do arquivo associado ao diretório raiz;
   mft_record descriptor2;           // registro 2: reservado para uso futuro

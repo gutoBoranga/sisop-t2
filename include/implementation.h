@@ -5,9 +5,16 @@
 #include <t2fs.h>
 #include <support.h>
 
-#define SECTOR_SIZE 256
+// tamanho em bytes
+#define RECORDS_PER_SECTOR 4
 #define SECTORS_PER_BLOCK 4
+
+#define SECTOR_SIZE 256
+#define RECORD_SIZE 64
+#define TUPLA_SIZE 16
 #define BLOCK_SIZE SECTOR_SIZE*SECTORS_PER_BLOCK
+
+
 
 // structs
 
