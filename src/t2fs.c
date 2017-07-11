@@ -246,54 +246,54 @@ int mkdir2 (char *pathname) {
   token = strtok(str, "/");
   char *lastToken;
   
-  int can_make_dir = 0;
+  int should_tokenize, can_make_dir = 0;
   
   // vai percorrer os dirs intermediarios
   while (token != NULL) {
     lastToken = token;
+    should_tokenize = 1;
     
-    // se não achar o registro mft do diretorio intermediario atual
-    if (FUNCAO_QUE_RETORNA_UM_REG_MFT(&dir, lastToken) != 0) {
-      token = strtok (NULL, "/");
-      
-      // se o diretorio atual era o último e nao achou registro mft pra ele,
-      // é porque não existe arquivo com este path, portanto pode criar
-      if (token == NULL) {
-        can_make_dir = 1;
-      } else {
-        printf("[ERRO] Não existem diretorios intermediários\n\n");
-        return -1;
-      }
+    // lê suas entradas
+    readEntradas2(dir->tuplas, &entradas);
+    FirstFila2(&entradas);
     
-    // se achou o registro mft do dir atual
-    } else {
-      // lê suas entrada
-      readEntradas2(dir->tuplas, &entradas);
-      FirstFila2(&entradas);
-      
-      // pega o primeiro registro (se houver)
-      struct t2fs_record *record;
-      record = malloc(sizeof(struct t2fs_record));
-      record = GetAtIteratorFila2(&entradas);
-      
-      token = strtok (NULL, "/");
-      
-      // percorre todas entradas procurando se tem algum arquivo com mesmo nome do que quero criar
-      while (record != NULL && !can_make_dir) {
-        // se o nome da entrada for o mesmo que o nome do dir que quero criar
-        if (strcmp(record->name, nameFromPath(pathname)) == 0) {
-          // se token = NULL, quer dizer que chegou no último dir do path dado.
-          // ou seja, se já tem uma entrada com o mesmo nome do dir que quero criar, não pode criar!
-          if (token == NULL) {
-            printf("[ERRO] Já existe um diretorio com este path\n\n");
-            return -1;
-          }
+    // pega o primeiro registro (se houver)
+    struct t2fs_record *record;
+    record = malloc(sizeof(struct t2fs_record));
+    record = GetAtIteratorFila2(&entradas);
+    
+    // token = strtok (NULL, "/");
+    
+    // percorre todas entradas procurando se tem algum arquivo com mesmo nome do que quero criar
+    while (record != NULL && !can_make_dir) {
+      // se o nome da entrada for o mesmo que o nome do dir que quero criar
+      if (strcmp(record->name, nameFromPath(pathname)) == 0) {
+        if (should_tokenize) {
+          token = strtok (NULL, "/");
+          should_tokenize = 0;
         }
         
-        NextFila2(&entradas);
-        record = GetAtIteratorFila2(&entradas);
+        // se token = NULL, quer dizer que chegou no último dir do path dado.
+        // ou seja, se já tem uma entrada com o mesmo nome do dir que quero criar, não pode criar!
+        if (token == NULL) {
+          printf("[ERRO] Já existe um diretorio com este path\n\n");
+          return -1;
+        }
+      }
+      
+      NextFila2(&entradas);
+      record = GetAtIteratorFila2(&entradas);
+      
+      if(should_tokenize) {
+        token = strtok (NULL, "/");
+        should_tokenize = 0;
       }
     }
+  }
+  
+  if (!can_make_dir) {
+    printf("[ERRO] Path inválido\n\n");
+    return -1;
   }
   
   // se chegou até aqui, pode criar um registro sem medo

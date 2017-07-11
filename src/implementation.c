@@ -136,7 +136,7 @@ Retorna: MFTNumber --Número do registro caso encontrado
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
 int busca_regMFT_livre(){
-	regMFT *regAtual;
+	reg_MFT *regAtual;
 	struct 	t2fs_4tupla *tupla;
 	
 
@@ -148,8 +148,8 @@ int busca_regMFT_livre(){
 
 	int MFTNumber = 4;
 	do{
-		regAtual = (regMFT *) GetAtIteratorFila2(&area_MFT); 
-		FirstFila2(&regAtual->tuplas);		//pega a primeira tupla do registro					
+		regAtual = (reg_MFT *) GetAtIteratorFila2(&area_MFT);
+		FirstFila2(&regAtual->tuplas);		//pega a primeira tupla do registro
 		tupla = (struct t2fs_4tupla *) GetAtIteratorFila2(&regAtual->tuplas);
 		if(tupla->atributeType == -1)
 			return MFTNumber;
@@ -168,8 +168,8 @@ Retorna: MFTNumber --Número do registro caso encontrado
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-regMFT* busca_regMFT(int MFTNumber){
-	regMFT *regAtual;
+reg_MFT* busca_regMFT(int MFTNumber){
+	reg_MFT *regAtual;
 	
 	if(FirstFila2(&area_MFT) != 0)
 		return NULL;
@@ -180,7 +180,7 @@ regMFT* busca_regMFT(int MFTNumber){
 			return NULL;
 	}
 	
-	regAtual = (regMFT *) GetAtIteratorFila2(&area_MFT); 
+	regAtual = (reg_MFT *) GetAtIteratorFila2(&area_MFT);
 	return regAtual;
 }
 
@@ -412,4 +412,21 @@ int readTupla(int sector, int position_in_sector, struct t2fs_4tupla* tupla) {
     }
 
     return 0;
+}
+
+char *nameFromPath(char *pathname) {
+  char *token;
+  char str[MAX_FILE_NAME_SIZE];
+  strcpy(str, pathname);
+  
+  token = strtok(str, "/");
+  printf("AAA: %s\n", token);
+  char *lastToken;
+  while (token != NULL) {
+    lastToken = token ;
+    token = strtok (NULL, "/");
+    
+    printf("\n%s", lastToken);
+  }
+  printf("\n\n");
 }

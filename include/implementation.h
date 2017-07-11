@@ -49,6 +49,7 @@ FILA2 dirList;
 DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len);
 DIRETORIO* getDiretorio(DIR2 handle);
 registro_dir* getEntrada(DIRETORIO *dir);
+// reg_MFT* busca_regMFT(int MFTNumber);
 int busca_regMFT_livre();
 int readEntradas(int dirByteSize, PFILA2 entradasList);
 int readBlock(int sectorNumber, unsigned char buffer[BLOCK_SIZE]);

@@ -28,12 +28,12 @@ int main() {    //COMENTA O TESTE QUE TU NAO QUISER TESTAR
 
     DIRETORIO *dir3 = malloc(sizeof(DIRETORIO));
     dir3->name = "diretorio3";
-    dir3->pai_pathname = "/diretorio2/";
+    dir3->pai_pathname = "/diretorio2";
     AppendFila2(&dirList, dir3);
 
 
     DIRETORIO *paizao;
-    paizao = buscaDiretorioPai(pathname, strlen(pathname), dirList);
+    paizao = buscaDiretorioPai(pathname, strlen(pathname));
     if(paizao != NULL){
     	printf("\nO nome do paizao é %s", paizao->name);
     	printf("\nNome do pai do diretorio3 : %s", dir3->pai_pathname);
@@ -57,7 +57,7 @@ int main() {    //COMENTA O TESTE QUE TU NAO QUISER TESTAR
     strcat(buffer, (char*)registroTeste.MFTNumber);*/
     printf("\n buffer = %s", buffer);
 
-    readEntradas(buffer);
+    // readEntradas(buffer);
 
 
 
