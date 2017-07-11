@@ -67,5 +67,10 @@ int main() {
 		printf("\n\n");
 	}
 
+  char *names;
+  names = "Augusto Boranga & Gabriel Job\n";
+  
+  identify2(names, MAX_FILE_NAME_SIZE);
+
 	return 0;
 }

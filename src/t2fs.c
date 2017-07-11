@@ -86,58 +86,7 @@ FILE2 create2 (char *filename) {
 
 
 int delete2 (char *filename) {
-  if (!path_is_valid(filename, TYPEVAL_DIRETORIO)) {
-    printf("[ERRO] Path %s inválido\n\n", filename);
-    return -1;
-  }
-  
-  int current_max = mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS;
-  
-  // se não existe nenhum registro
-  if (current_max <= 0) {
-    return -1;
-  }
-  
-  char descriptor[MAX_FILE_NAME_SIZE];
-  int i, found;
-  i = found = 0;
-  
-  mft_record *mft_rec;
-  
-  while(i < current_max) {
-    strncpy(descriptor, mftBlock.filesDescriptors[i]->record->name, strlen(filename));
-    
-    // se encontrou o registro
-    if (pathsAreEquivalent(filename, mftBlock.filesDescriptors[i]->record->name)) {
-      // E É UM ARQUIVO REGULAR UHUUL
-      if (mftBlock.filesDescriptors[i]->record->TypeVal == TYPEVAL_REGULAR) {
-        mft_rec = mftBlock.filesDescriptors[i];
-        found = 1;
-      
-      // caso não seja um arquivo regular
-      } else {
-        printf("[ERRO] Path %s não é um arquivo regular\n\n", filename);
-        return -1;
-      }
-    }
-    i++;
-  }
-  
-  if (!found) {
-    printf("[ERRO] Arquivo %s não foi encontrado\n\n", filename);
-    return -1;
-  }
-  
-  // seta flag do registro como inválido
-  mft_rec->valid = MFT_RECORD_INVALID;
-  
-  // cria nodo pra lista de indices removidos
-  di_node *node = createDInode(mft_rec->record->MFTNumber);
-  mftBlock.deleted_indexes = appendDInode(node, mftBlock.deleted_indexes);
-  
-  printf("[INFO] Path %s removido com sucesso!\n\n", filename);
-  
-  return 0;
+  return -1;
 }
 
 
@@ -207,7 +156,7 @@ int truncate2 (FILE2 handle) {
 
 
 int seek2 (FILE2 handle, DWORD offset) {
-  
+  return -1;
 }
 
 
@@ -264,61 +213,62 @@ int mkdir2 (char *pathname) {
 
 
 int rmdir2 (char *pathname) {
-  if (!path_is_valid(pathname, TYPEVAL_DIRETORIO)) {
-    printf("[ERRO] Path %s inválido\n\n", pathname);
-    return -1;
-  }
-  
-  int current_max = mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS;
-  
-  // se não existe nenhum registro
-  if (current_max <= 0) {
-    return -1;
-  }
-  
-  char descriptor[MAX_FILE_NAME_SIZE];
-  int i, number_of_matches;
-  i = number_of_matches = 0;
-  
-  mft_record *mft_rec;
-  
-  while(i < current_max) {
-    strncpy(descriptor, mftBlock.filesDescriptors[i]->record->name, strlen(pathname));
-    
-    // vê se encontrou o diretório em questão
-    if (pathsAreEquivalent(pathname, mftBlock.filesDescriptors[i]->record->name)) {
-      if (mftBlock.filesDescriptors[i]->record->TypeVal != TYPEVAL_DIRETORIO) {
-        printf("[ERRO] Path %s não é um diretório\n\n", pathname);
-        return -1;
-      // encontrou o registro E É UM DIRETORIO UHUUL
-      } else {
-        mft_rec = mftBlock.filesDescriptors[i];
-        number_of_matches += 1;
-      }
-    
-    // vê se encontra algum subdiretório
-    } else if (pathsAreEquivalent(pathname, descriptor)) {
-      number_of_matches += 1;
-    }
-    i++;
-  }
-  
-  if (number_of_matches == 0) {
-    printf("[ERRO] Path %s não corresponde a um diretório\n\n", pathname);
-    return -1;
-  } else if (number_of_matches > 1) {
-    printf("[ERRO] Diretório %s não pode ser removido pois não está vazio\n\n", pathname);
-    return -1;
-  }
-  
-  // seta flag do registro como inválido
-  mft_rec->valid = MFT_RECORD_INVALID;
-  
-  // cria nodo pra lista de indices removidos
-  di_node *node = createDInode(mft_rec->record->MFTNumber);
-  mftBlock.deleted_indexes = appendDInode(node, mftBlock.deleted_indexes);
-  
-  return 0;
+  return -1;
+//   if (!path_is_valid(pathname, TYPEVAL_DIRETORIO)) {
+//     printf("[ERRO] Path %s inválido\n\n", pathname);
+//     return -1;
+//   }
+//
+//   int current_max = mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS;
+//
+//   // se não existe nenhum registro
+//   if (current_max <= 0) {
+//     return -1;
+//   }
+//
+//   char descriptor[MAX_FILE_NAME_SIZE];
+//   int i, number_of_matches;
+//   i = number_of_matches = 0;
+//
+//   mft_record *mft_rec;
+//
+//   while(i < current_max) {
+//     strncpy(descriptor, mftBlock.filesDescriptors[i]->record->name, strlen(pathname));
+//
+//     // vê se encontrou o diretório em questão
+//     if (pathsAreEquivalent(pathname, mftBlock.filesDescriptors[i]->record->name)) {
+//       if (mftBlock.filesDescriptors[i]->record->TypeVal != TYPEVAL_DIRETORIO) {
+//         printf("[ERRO] Path %s não é um diretório\n\n", pathname);
+//         return -1;
+//       // encontrou o registro E É UM DIRETORIO UHUUL
+//       } else {
+//         mft_rec = mftBlock.filesDescriptors[i];
+//         number_of_matches += 1;
+//       }
+//
+//     // vê se encontra algum subdiretório
+//     } else if (pathsAreEquivalent(pathname, descriptor)) {
+//       number_of_matches += 1;
+//     }
+//     i++;
+//   }
+//
+//   if (number_of_matches == 0) {
+//     printf("[ERRO] Path %s não corresponde a um diretório\n\n", pathname);
+//     return -1;
+//   } else if (number_of_matches > 1) {
+//     printf("[ERRO] Diretório %s não pode ser removido pois não está vazio\n\n", pathname);
+//     return -1;
+//   }
+//
+//   // seta flag do registro como inválido
+//   mft_rec->valid = MFT_RECORD_INVALID;
+//
+//   // cria nodo pra lista de indices removidos
+//   di_node *node = createDInode(mft_rec->record->MFTNumber);
+//   mftBlock.deleted_indexes = appendDInode(node, mftBlock.deleted_indexes);
+//
+//   return 0;
 }
 
 
