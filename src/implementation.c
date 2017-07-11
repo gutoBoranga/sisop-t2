@@ -32,13 +32,13 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) {
     printf("\n\n\n\n");
     printaDiretoriosLista(dirList);
     printf("\n\n\n\n");
-    
+
     strcpy(pathcpy, pathname);
     name_token = strtok(pathcpy,"/");
     strcpy(pathPaiAtual, "/");
     FirstFila2(&dirList);
     paiAtual = (DIRETORIO *) GetAtIteratorFila2(&dirList);
-    
+
 
     while(!found && !error){
        tokenEqualsAtual = 0;
@@ -54,20 +54,18 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) {
 		strcat(pathPaiAtual, name_token);
               }
         } while(NextFila2(&dirList) == 0 && tokenEqualsAtual==0);
-        /*if(dirAtual == NULL){
-            FirstFila2(paiAtual->entradas);
-            entradaAtual = GetAtIteratorFila2(paiAtual->entradas);
-            while(entradaAtual != NULL){
-                if(strcmp(name_token, entradaAtual.name) == 0){
-                    strcat(pathPaiAtual, "/");
-                    strcat(pathPaiAtual, name_token);
-                    opendir2(pathPaiAtual);  //apenas cria uma estrutura nova se for realmente um diretório
-                    tokenEqualsAtual = 1;
+       if(dirAtual == NULL){
+            FirstFila2(&paiAtual->entradas);
+	    do{
+            	entradaAtual = GetAtIteratorFila2(&paiAtual->entradas);
+                if(strcmp(name_token, entradaAtual->name) == 0){
+                  strcat(pathPaiAtual, "/");
+                  strcat(pathPaiAtual, name_token);
+                  opendir2(pathPaiAtual);  //apenas cria uma estrutura nova se for realmente um diretório
+                  tokenEqualsAtual = 1;
                 }
-                else
-                    NextFila2(paiAtual->entradas);
-            }
-        }*/
+            }while(NextFila2(&paiAtual->entradas) == 0);
+        }
         name_token = strtok(NULL, "/");
 	// printf("\ntokenEqualsAtual = %d",tokenEqualsAtual);
         if(tokenEqualsAtual){
@@ -171,7 +169,7 @@ registro_dir* get_t2fs_record_from_dir(DIRETORIO *dir, char *name){
 
 	char name_string[MAX_FILE_NAME_SIZE];
 	memcpy(name_string, name, MAX_FILE_NAME_SIZE);
-	
+
 	if(FirstFila2(&dir->entradas) == 0){
 		do{
 			registroAtual = (registro_dir *) GetAtIteratorFila2(&dir->entradas);
@@ -201,7 +199,7 @@ int busca_regMFT_livre() {
   if (NextFila2(&area_MFT) != 0) { //vai para o primeiro registro não reservado as S.A.
     return -2;
   }
-  
+
 	int MFTNumber = 5;
 	do{
 		regAtual = (reg_MFT *) GetAtIteratorFila2(&area_MFT);
@@ -209,10 +207,10 @@ int busca_regMFT_livre() {
 		tupla = (struct t2fs_4tupla *) GetAtIteratorFila2(&regAtual->tuplas);
 		if(tupla->atributeType == -1)
 			return MFTNumber;
-		
+
 		MFTNumber++;
 	} while(NextFila2(&area_MFT) == 0);
-	
+
 	return -1;
 }
 
@@ -226,74 +224,32 @@ GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
 reg_MFT* busca_regMFT(int MFTNumber) {
 	reg_MFT *regAtual;
-	
+
 	if(FirstFila2(&area_MFT) != 0)
 		return NULL;
-	
+
 	int i = 0;
 	for(i = 0; i < MFTNumber; i++){
 		if(NextFila2(&area_MFT) != 0)
 			return NULL;
 	}
-	
+
 	regAtual = (reg_MFT *) GetAtIteratorFila2(&area_MFT);
 	return regAtual;
 }
 
-/*----------------------------------------------------------------------------------------------
-Função para ler as entradas de um diretório do disco.
 
-
-Retorna: 0  --Se entradas lidas com sucesso
-	 	-1  --Caso houve erro na leitura
-
-GABRIEL JOB
-----------------------------------------------------------------------------------------------*/
-int readEntradas(int dirByteSize, PFILA2 entradasList ) {//ADICIONAR MFT_RECORD COMO PARAMETRO
-	struct t2fs_record *registroAux;
-	unsigned char blocoAtual[BLOCK_SIZE];
-	int i, offset = 0;
-
-	int blocoAtualNumber = getBlockFromMFT(); //mudar
-	while(blocoAtualNumber > 0){
-		if(readBlock(blocoAtualNumber, blocoAtual) != 0)
-			return -1;
-
-		offset = 0;
-
-		if(dirByteSize >= BLOCK_SIZE)
-			i = BLOCK_SIZE;
-		else
-			i = dirByteSize;
-		while(i>0){
-			registroAux = malloc(sizeof(struct t2fs_record));
-
-			registroAux->TypeVal = *((BYTE *)(blocoAtual + offset));
-   			strncpy(registroAux->name, blocoAtual + offset + 1, 51);
-   			registroAux->blocksFileSize = *((DWORD *)(blocoAtual + offset + 52));
-   			registroAux->bytesFileSize = *((DWORD *)(blocoAtual + offset + 56));
-   			registroAux->MFTNumber = *((DWORD *)(blocoAtual +offset + 60));
-
-			offset += 64;
-			dirByteSize -= 64;
-			i -= 64;
-			AppendFila2(entradasList, registroAux);
-		}
-		blocoAtualNumber = getBlockFromMFT();
-	}
-	return 0;
-}
 
 int readEntradas2(FILA2 tuplas, PFILA2 entradasList) {
   if (FirstFila2(&tuplas) != 0) {
     printf("[ERRO] Erro ao ler entradas: fila de tuplas vazia\n\n");
     return -1;
   }
-  
+
   // pega tupla inicial do arquivo
   struct t2fs_4tupla *tuplaAtual;
   tuplaAtual = GetAtIteratorFila2(&tuplas);
-  
+
   // percorre todas tuplas
   while (tuplaAtual != NULL) {
     // se não for uma "tupla de mapeamento VBN-LBN"
@@ -306,27 +262,27 @@ int readEntradas2(FILA2 tuplas, PFILA2 entradasList) {
       // neste caso, já deve ter colocado na lista todos os registros, então retorna 0
       return 0;
     }
-    
+
     int i, j, k;
     i = j = k = 0;
-    
+
     // percorre todos blocos contíguos da tupla
     for(i = 0; i < tuplaAtual->numberOfContiguosBlocks; i++) {
       int block = tuplaAtual->logicalBlockNumber + i;
-      
+
       // percorre todos setores do bloco
       for(j = 0; j < SECTORS_PER_BLOCK; j++) {
         int sector = block * SECTORS_PER_BLOCK + j;
-        
+
         // percorre todos registros do setor
         for(k = 0; k < RECORDS_PER_SECTOR; k++) {
           struct t2fs_record *record = malloc(sizeof(struct t2fs_record));
-          
+
           if (readRecord(sector, k, record) != 0) {
             printf("[ERRO] Erro ao criar registro a partir das tuplas\n\n");
             return -1;
           }
-          
+
           // se tudo ok, coloca registro na fila
           AppendFila2(entradasList, record);
         }
@@ -338,28 +294,6 @@ int readEntradas2(FILA2 tuplas, PFILA2 entradasList) {
   return 0;
 }
 
-/*----------------------------------------------------------------------------------------------
-Função que diz onde está no disco o próximo bloco do arquivo a ser acessado.
-
-PS.: Provavelmente é uma boa usar como parâmetro o último bloco já acessado
-----------------------------------------------------------------------------------------------*/
-int getBlockFromMFT(/*mft_record registro, int blocoAtual*/){ //recebo VBN ou LBN?
-	/*struct t2fs_4tupla tuplaAtual;
-	int LBN_encontrado = -1;
-	int dif;
-
-	int i;
-	for(i = 0; i < NUM_TUPLAS; i++){
-	  tuplaAtual = registro.tuplas[i]; //testar se a tuplaAtual é valida antes
-	  if(tuplaAtual.virtualBlockNumber <= blocoAtual){
-	  	if((tuplaAtual.virtualBlockNumber + tuplaAtual.numberOfContiguosBlocks - 1) >= blocoAtual)
-			dif = blocoAtual - tuplaAtual.virtualBlockNumber;
-			LBN_encontrado = tuplaAtual.virtualBlockNumber + dif;
-	  }
-	}
-	
-	return LBN_encontrado;*/
-}
 
 /*----------------------------------------------------------------------------------------------
 Função que testa se já existe determinado arquivo na lista de arquivos abertos.
@@ -444,7 +378,7 @@ int writeBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]){
 	int i;
 	int bytesEscritos = 0;
 	unsigned char sectorBuffer[SECTOR_SIZE];
-	
+
 	for(i=0; i<SECTORS_PER_BLOCK; i++){
 		memcpy(sectorBuffer, blockBuffer + bytesEscritos, SECTOR_SIZE);
 		if(write_sector(sectorNumber + i, sectorBuffer) != 0)
@@ -496,14 +430,14 @@ int readRecord(int sector, int position_in_sector, struct t2fs_record* record) {
 // salva no ponteiro tupla o que for lido do disco
 int readTupla(int sector, int position_in_sector, struct t2fs_4tupla* tupla) {
     unsigned char buffer_sector[SECTOR_SIZE];
-    
+
     if (read_sector(sector, buffer_sector) != 0) {
         printf("[ERRO] Erro ao ler setor %i\n", sector);
         return -1;
     }
-    
+
     BYTE t[TUPLA_SIZE];
-    
+
     int i;
     for(i = 0; i < TUPLA_SIZE; i++) {
       t[i] = buffer_sector[(TUPLA_SIZE * position_in_sector) + i];
@@ -517,7 +451,7 @@ char *nameFromPath(char *pathname) {
   char *token;
   char str[MAX_FILE_NAME_SIZE];
   strcpy(str, pathname);
-  
+
   token = strtok(str, "/");
   char *lastToken;
   while (token != NULL) {
@@ -534,15 +468,15 @@ char *pathDoPai(char *pathname) {
 
   strcpy(str, pathname);
   strcpy(pathDoPai, "");
-  
+
   token = strtok(str, "/");
   int levels = 1;
-  
+
   char *lastToken;
   while (token != NULL) {
     lastToken = token;
     token = strtok (NULL, "/");
-    
+
     if (token != NULL) {
       strcat(pathDoPai, "/");
       strcat(pathDoPai, lastToken);

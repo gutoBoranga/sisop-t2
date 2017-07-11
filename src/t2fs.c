@@ -38,7 +38,7 @@ FILE2 create2 (char *filename) {
 		init_blocks();
 		has_initialized = 1;
 	}
- 
+
 	if (!path_is_valid(filename, TYPEVAL_REGULAR)) {
 		printf("[ERRO] Path %s inválido\n\n", filename);
 		return -1;
@@ -48,13 +48,13 @@ FILE2 create2 (char *filename) {
 	dirPai = buscaDiretorioPai(filename, strlen(filename));
 	if(dirPai == NULL)
 		return -1;
-	
+
 	ARQUIVO *novo_arquivo;
 	novo_arquivo = (ARQUIVO *) malloc(sizeof(ARQUIVO));
-	
+
 	//pega nome do novo arquivo e path do pai
 	char *arqName;
-	
+
 	char *paiPath;
 	paiPath = pathDoPai(filename);
 	novo_arquivo->pai_pathname = paiPath;
@@ -67,7 +67,7 @@ FILE2 create2 (char *filename) {
 	t2fs_reg->blocksFileSize = 0;
 	t2fs_reg->bytesFileSize = 0;
 	t2fs_reg->MFTNumber = busca_regMFT_livre();
-	
+
 	//salva novo t2fs_record no diretorio pai e no novo arquivo
 	AppendFila2(&dirPai->entradas, t2fs_reg);
 	novo_arquivo->t2fs_reg = t2fs_reg;
@@ -109,7 +109,7 @@ FILE2 open2 (char *filename) {
 	dirPai = buscaDiretorioPai(filename, strlen(filename));
 	if(dirPai == NULL)
 		return -1;
-	
+
 	ARQUIVO *novo_arquivo;
 	novo_arquivo = (ARQUIVO *) malloc(sizeof(ARQUIVO));
 
@@ -141,7 +141,22 @@ int close2 (FILE2 handle) {
 
 
 int read2 (FILE2 handle, char *buffer, int size) {
-  return -1;
+  	if (!has_initialized) {
+    init_blocks();
+    has_initialized = 1;
+  }
+
+	ARQUIVO *arq;
+	arq = getArquivo(handle);
+
+	unsigned char blockBuffer[BLOCK_SIZE];
+
+	/*while(){
+		if(readBlock(blocoAtualNumber,blockBuffer)  != 0)
+			return -1;
+
+	}*/
+    return -1;
 }
 
 
@@ -165,7 +180,7 @@ int mkdir2 (char *pathname) {
 		init_blocks();
 		has_initialized = 1;
 	}
- 
+
 	if (!path_is_valid(pathname, TYPEVAL_DIRETORIO)) {
 		printf("[ERRO] Path %s inválido\n\n", pathname);
 		return -1;
@@ -175,13 +190,13 @@ int mkdir2 (char *pathname) {
 	dirPai = buscaDiretorioPai(pathname, strlen(pathname));
 	if(dirPai == NULL)
 		return -1;
-	
+
 	DIRETORIO *novo_diretorio;
 	novo_diretorio = (DIRETORIO *) malloc(sizeof(DIRETORIO));
-	
+
 	//pega nome do novo arquivo e path do pai
 	char *dirName;
-	
+
 	char *paiPath;
 	paiPath = pathDoPai(pathname);
 	novo_diretorio->pai_pathname = paiPath;
@@ -194,7 +209,7 @@ int mkdir2 (char *pathname) {
 	t2fs_reg->blocksFileSize = 0;
 	t2fs_reg->bytesFileSize = 0;
 	t2fs_reg->MFTNumber = busca_regMFT_livre();
-	
+
 	//salva novo t2fs_record no diretorio pai e no novo arquivo
 	AppendFila2(&dirPai->entradas, t2fs_reg);
 	novo_diretorio->t2fs_reg = t2fs_reg;
@@ -291,7 +306,7 @@ DIR2 opendir2 (char *pathname) {
 	dirPai = buscaDiretorioPai(pathname, strlen(pathname));
 	if(dirPai == NULL)
 		return -1;
-	
+
 	DIRETORIO *novo_diretorio;
 	novo_diretorio = (DIRETORIO *) malloc(sizeof(DIRETORIO));
 
@@ -331,30 +346,30 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) {
 	strncpy(dentry->name, entrada->name, 51);
 	dentry->fileType = entrada->TypeVal;
 	dentry->fileSize = entrada->bytesFileSize;
-	
+
 	return 0;
 }
 
 
 int closedir2 (DIR2 handle) {
   di_node *head = createDInode(3);
-  
+
   di_node *n1 = createDInode(6);
   appendDInode(n1, head);
-  
+
   di_node *n2 = createDInode(10);
   appendDInode(n2, head);
-  
+
   di_node *n3 = createDInode(1);
   appendDInode(n3, head);
-  
+
   di_node *n = head;
   while (n->next != NULL) {
     printf("%i\n", n->index);
     n = n->next;
   }
   printf("%i\n\n\n", n->index);
-  
+
   head = removeFirstDInode(head);
   n = head;
   if (head != NULL) {
@@ -395,7 +410,7 @@ void initBootBlock() {
 void init_implementation(){
 	CreateFila2(&dirList);
 	CreateFila2(&arqList);
-	
+
 	last_dir_handle = 0;
 	last_arq_handle = 0;
 
@@ -429,51 +444,51 @@ void initMFTBlock() {
 	if(CreateFila2(&area_MFT) == 0){
 		boot_area_MFT();
   }
-  
-  
+
+
   mftBlock.next_valid_MFTnumber = 0;
-  
+
   mftBlock.deleted_indexes = NULL;
-  
+
   // cria registro t2fs para o bitmap
   struct t2fs_record *bitmap;
   bitmap = createRegister(TYPEVAL_INVALIDO, "", 0, 0, mftBlock.next_valid_MFTnumber);
-  
+
   // cria registro mft para representar o bitmap
   mftBlock.bitmapDescriptor.record = bitmap;
   mftBlock.bitmapDescriptor.tuplas[0] = createTupla(0, 0, 0, 0);
-  
+
   mftBlock.next_valid_MFTnumber += 1;
-  
+
   // cria registro t2fs do dir root
   struct t2fs_record *root;
   root = createRegister(TYPEVAL_DIRETORIO, "/", 1, 0, mftBlock.next_valid_MFTnumber);
-  
-  
-  
+
+
+
   mftBlock.next_valid_MFTnumber += 1;
 
   // cria registro mft para representar o root
   //// seta seu record para apontar pro registro t2fs que criamos acima
   mftBlock.rootDescriptor.record = root;
-  
+
   //// seta a primeira tupla do array pra representar que está vazio
   mftBlock.rootDescriptor.tuplas[0] = createTupla(0, 0, 0, 0);
-  
+
   // cria os 2 registros mft "reservados para uso futuro"
   struct t2fs_record invalid_record;
   invalid_record.TypeVal = TYPEVAL_INVALIDO;
-  
+
   mftBlock.descriptor2.record = malloc(sizeof(struct t2fs_record));
   mftBlock.descriptor2.record = &invalid_record;
   (mftBlock.descriptor2.record)->MFTNumber = mftBlock.next_valid_MFTnumber;
   mftBlock.next_valid_MFTnumber += 1;
-  
+
   mftBlock.descriptor3.record = malloc(sizeof(struct t2fs_record));
   mftBlock.descriptor3.record = &invalid_record;
   (mftBlock.descriptor3.record)->MFTNumber = mftBlock.next_valid_MFTnumber;
   mftBlock.next_valid_MFTnumber += 1;
-  
+
   // malloca a parte do mft que vai conter todos os registros restantes
   mftBlock.filesDescriptors = malloc(sizeof(mft_record) * mft_filesDescriptors_max_size);
 }
@@ -481,13 +496,13 @@ void initMFTBlock() {
 struct t2fs_record *createRegister(BYTE typeVal, char *name, DWORD blocksSize, DWORD bytesSize, DWORD mftNumber) {
     struct t2fs_record *new_register;
     new_register = malloc(sizeof(struct t2fs_record));
-    
+
     new_register->TypeVal = typeVal;
     strcpy(new_register->name, name);
     new_register->blocksFileSize = blocksSize;
     new_register->bytesFileSize = bytesSize;
     new_register->MFTNumber = mftNumber;
-    
+
     return new_register;
 }
 
@@ -495,23 +510,23 @@ struct t2fs_record *createRegister(BYTE typeVal, char *name, DWORD blocksSize, D
 int path_is_valid(char *pathname, DWORD typeVal) {
   char c;
   int i = 0;
-  
+
   // garante que começa no root
   c = pathname[0];
   if (c != '/') {
     return 0;
   }
-  
+
   // garante que não quer criar o root
   char *token;
   char str[MAX_FILE_NAME_SIZE];
   strcpy(str, pathname);
-  
+
   token = strtok(str, "/");
   if (token == NULL) {
     return 0;
   }
-    
+
   // se for arquivo regular, garante que path não termina em '/'
   if (typeVal == TYPEVAL_REGULAR) {
     c = pathname[strlen(pathname) - 1];
@@ -519,20 +534,20 @@ int path_is_valid(char *pathname, DWORD typeVal) {
       return 0;
     }
   }
-  
+
   return 1;
 }
-  
+
 int father_exists(char *pathname) {
   int current_max = mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS;
   char father[strlen(pathname)], c;
   int i = 0;
-  
+
   strcpy(father, "/");
-  
+
   for (i = 1; i < strlen(pathname) - 1; i ++) {
     c = pathname[i];
-    
+
     // se for o '/', copia pro father tudo que tem antes do '/'
     if (c == '/') {
       strncpy(father, pathname, i);
@@ -544,25 +559,25 @@ int father_exists(char *pathname) {
   if ((mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS) > 0) {
     int i, pathsEqual;
     i = pathsEqual = 0;
-    
+
     // se o dir father for o root '/', marca que flag de existência do dir pai
     if (strcmp(father, "/") == 0) {
       return 1;
     }
-    
+
     while(i < current_max) {
       int result = pathsAreEquivalent(father, mftBlock.filesDescriptors[i]->record->name);
-      
+
       // se achou um path igual ao do father E for um diretorio, retorna true
       if (mftBlock.filesDescriptors[i]->record->TypeVal == TYPEVAL_DIRETORIO && mftBlock.filesDescriptors[i]->valid == MFT_RECORD_VALID && result > 0) {
         return 1;
       }
-      
+
       i++;
     }
     printf("[ERRO] Não existe estrutura de diretório %s\n\n", father);
     return 0;
-  
+
   // caso seja o primeiro diretório a ser criado, o pai só pode ser o root
   } else {
     if (strcmp(father, "/") != 0) {
@@ -576,11 +591,11 @@ int father_exists(char *pathname) {
 int path_already_exists(char *pathname) {
   int current_max = mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS;
   int i = 0;
-  
+
   // se já existe algum registro
   if ((mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS) > 0) {
     int pathsEqual = 0;
-    
+
     while(i < current_max) {
       // confere se já existe arquivo com aquele path
       if (pathsAreEquivalent(pathname, mftBlock.filesDescriptors[i]->record->name)) {
@@ -594,18 +609,18 @@ int path_already_exists(char *pathname) {
 
 int pathsAreEquivalent(char path1[MAX_FILE_NAME_SIZE], char path2[MAX_FILE_NAME_SIZE]) {
   char path1_barra[MAX_FILE_NAME_SIZE], path2_barra[MAX_FILE_NAME_SIZE];
-  
+
   strcpy(path1_barra, path1);
   strcat(path1_barra, "/");
 
   strcpy(path2_barra, path2);
   strcat(path2_barra, "/");
-  
+
   int pathsEqual = 0;
   pathsEqual += stringCompare(path1, path2);
   pathsEqual += stringCompare(path1_barra, path2);
   pathsEqual += stringCompare(path1, path2_barra);
-  
+
   return pathsEqual;
 }
 
@@ -621,7 +636,7 @@ mft_record *getMFTRecord(char *pathname) {
   int pathsEqual = 0;
   int i = 0;
   mft_record *pointer;
-  
+
   // se já existe algum registro
   if ((mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS) > 0) {
     while(i < current_max) {
@@ -638,7 +653,7 @@ mft_record *getMFTRecord(char *pathname) {
 void printDeletedIndexesList() {
   di_node *n;
   n = mftBlock.deleted_indexes;
-  
+
   printf("\nLista de indices removidos:");
   if (n != NULL) {
     while (n->next != NULL) {

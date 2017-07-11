@@ -31,19 +31,19 @@ typedef struct deleted_index_node {
 
 struct t2fs_mftBlock {		// Tabela 1 � Descri��o dos campos do bloco de boot
   int next_valid_MFTnumber;             // número de registros válidos
-	
+
 	FILA2 bitmap;  // registro 0: descritor do arquivo que fornece o bitmap de blocos de dados livres e ocupados;
   FILA2 root;    // registro 1: descritor do arquivo associado ao diretório raiz;
   FILA2 d2;           // registro 2: reservado para uso futuro
   FILA2 d3;           // registro 3: reservado para uso futuro
   FILA2 files; // outros registros
-	
+
   mft_record bitmapDescriptor;  // registro 0: descritor do arquivo que fornece o bitmap de blocos de dados livres e ocupados;
   mft_record rootDescriptor;    // registro 1: descritor do arquivo associado ao diretório raiz;
   mft_record descriptor2;           // registro 2: reservado para uso futuro
   mft_record descriptor3;           // registro 3: reservado para uso futuro
   mft_record **filesDescriptors; // outros registros
-  
+
   di_node *deleted_indexes;
 };
 
@@ -56,7 +56,11 @@ di_node* removeFirstDInode(di_node *head);
 struct t2fs_4tupla createTupla(DWORD atributeType, DWORD vbn, DWORD lbn, DWORD contiguosBlocks);
 void print_the_sound_of_a_capybara();
 
+
+int readEntradas(PFILA2 entradasList, reg_MFT *registro_MFT, int dirByteSize);
+int getBlockFromMFT(reg_MFT *registro, int VBN_Atual);
 int boot_area_MFT ();
+int write_area_MFT();
 void print_area_MFT();
 
 struct t2fs_4tupla *createTuplaPointer(DWORD atributeType, DWORD vbn, DWORD lbn, DWORD contiguosBlocks);
