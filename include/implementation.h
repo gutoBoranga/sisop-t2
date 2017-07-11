@@ -50,6 +50,7 @@ registro_dir* get_t2fs_record_from_dir(DIRETORIO *dir, char *name);
 int busca_regMFT_livre();
 int readEntradas(int dirByteSize, PFILA2 entradasList);
 int arquivo_ja_aberto(char *pathname);
+int diretorio_ja_aberto(char *pathname);
 int readBlock(int sectorNumber, unsigned char buffer[BLOCK_SIZE]);
 int writeBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]);
 int printaDiretoriosLista(FILA2 fila);

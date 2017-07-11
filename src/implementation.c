@@ -22,7 +22,7 @@ Retorna: DIRETORIO* --Ponteiro para a struct do diretório pai se encontrou
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) { 
+DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) {
     DIRETORIO *paiAtual, *dirAtual;
     registro_dir *entradaAtual;
     char pathcpy[pathname_len], pathPaiAtual[pathname_len];
@@ -35,7 +35,7 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) {
     
     strcpy(pathcpy, pathname);
     name_token = strtok(pathcpy,"/");
-    strcpy(pathPaiAtual, "/"); 
+    strcpy(pathPaiAtual, "/");
     FirstFila2(&dirList);
     paiAtual = (DIRETORIO *) GetAtIteratorFila2(&dirList);
     
@@ -45,7 +45,7 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) {
        FirstFila2(&dirList);
        do {
          dirAtual = (DIRETORIO *) GetAtIteratorFila2(&dirList);
-         printf("\ntoken: %s \ndirAtual: %s \npathPaiAtual: %s \npaiDiretorio: %s\n",name_token,dirAtual->t2fs_reg->name,pathPaiAtual,dirAtual->pai_pathname);
+        //  printf("\ntoken: %s \ndirAtual: %s \npathPaiAtual: %s \npaiDiretorio: %s\n",name_token,dirAtual->t2fs_reg->name,pathPaiAtual,dirAtual->pai_pathname);
          if(strcmp(name_token, dirAtual->t2fs_reg->name) == 0)
               if(strcmp(pathPaiAtual, dirAtual->pai_pathname) == 0) {
                 tokenEqualsAtual = 1;
@@ -69,7 +69,7 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len) {
             }
         }*/
         name_token = strtok(NULL, "/");
-	printf("\ntokenEqualsAtual = %d",tokenEqualsAtual);
+	// printf("\ntokenEqualsAtual = %d",tokenEqualsAtual);
         if(tokenEqualsAtual){
 		if(name_token == NULL)
 			found = 1;
@@ -97,7 +97,7 @@ Retorna: DIRETORIO* --Ponteiro para a struct do diretório se encontrou
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-DIRETORIO* getDiretorio(DIR2 handle){ 
+DIRETORIO* getDiretorio(DIR2 handle){
 	DIRETORIO *dirAtual;
 
 	if(FirstFila2(&dirList) == 0){
@@ -121,7 +121,7 @@ Retorna: ARQUIVO* --Ponteiro para a struct do arquivo se encontrou
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-ARQUIVO* getArquivo(FILE2 handle){ 
+ARQUIVO* getArquivo(FILE2 handle){
 	ARQUIVO *arqAtual;
 
 	if(FirstFila2(&arqList) == 0){
@@ -170,7 +170,7 @@ registro_dir* get_t2fs_record_from_dir(DIRETORIO *dir, char *name){
 	registro_dir *registroAtual;
 
 	char name_string[MAX_FILE_NAME_SIZE];
-	memcpy(name_string, name, MAX_FILE_NAME_SIZE);	
+	memcpy(name_string, name, MAX_FILE_NAME_SIZE);
 	
 	if(FirstFila2(&dir->entradas) == 0){
 		do{
@@ -370,24 +370,44 @@ Retorna: 0 -- Se o arquivo não foi aberto
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
 int arquivo_ja_aberto(char *pathname){
-	ARQUIVO *arq;	
+	ARQUIVO *arq;
 	char *arqName;
-	char *paiPath;	
+	char *paiPath;
 
 	if(FirstFila2(&arqList) == 0){
-		do{	
+		do{
 			arq = (ARQUIVO *) GetAtIteratorFila2(&arqList);
 			arqName = nameFromPath(pathname);
 			if(memcmp(arqName, arq->t2fs_reg->name, sizeof(arqName)) == 0){
-				paiPath = pathDoPai(pathname);		
+				paiPath = pathDoPai(pathname);
 				if(memcmp(paiPath, arq->pai_pathname, sizeof(paiPath)) == 0){
 					return 1;
 				}
 			}
-		}while(NextFIla2(&arqList) == 0);
+		}while(NextFila2(&arqList) == 0);
 	}
-	return 0;	
-} 
+	return 0;
+}
+
+int diretorio_ja_aberto(char *pathname) {
+	DIRETORIO *dir;
+	char *dirName;
+	char *paiPath;
+
+	if(FirstFila2(&dirList) == 0){
+		do{
+			dir = (DIRETORIO *) GetAtIteratorFila2(&dirList);
+			dirName = nameFromPath(pathname);
+			if(memcmp(dirName, dir->t2fs_reg->name, sizeof(dirName)) == 0){
+				paiPath = pathDoPai(pathname);
+				if(memcmp(paiPath, dir->pai_pathname, sizeof(paiPath)) == 0){
+					return 1;
+				}
+			}
+		}while(NextFila2(&dirList) == 0);
+	}
+	return 0;
+}
 
 
 /*----------------------------------------------------------------------------------------------
@@ -396,7 +416,7 @@ Função que lê o bloco de um determinado setor do disco para o buffer recebido
 Retorna: 0  --Se lido com sucesso
 	 	-1  --Caso houve erro na leitura
 
-GABRIEL JOB
+GABRIEL STEVE JOB
 ----------------------------------------------------------------------------------------------*/
 int readBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]){
 	int i;

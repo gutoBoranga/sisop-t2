@@ -60,7 +60,7 @@ FILE2 create2 (char *filename) {
 	novo_arquivo->pai_pathname = paiPath;
 
 	//cria um novo t2fs_record
-	registro_dir *t2fs_reg = (registro_dir *) malloc(sizeof(registro_dir));	
+	registro_dir *t2fs_reg = (registro_dir *) malloc(sizeof(registro_dir));
 	t2fs_reg->TypeVal = 1;
 	arqName = nameFromPath(filename);
 	memcpy(t2fs_reg->name, arqName, MAX_FILE_NAME_SIZE);
@@ -81,7 +81,7 @@ FILE2 create2 (char *filename) {
 	//coloca arquivo na lista de arquivos abertos
 	AppendFila2(&arqList, novo_arquivo);
 
-	return novo_arquivo->handle;	
+	return novo_arquivo->handle;
 }
 
 
@@ -153,7 +153,7 @@ FILE2 open2 (char *filename) {
 	}
 
 	if(arquivo_ja_aberto(filename) != 0){
-		return -1;	
+		return -1;
 	}
 
 	DIRETORIO *dirPai;
@@ -187,29 +187,22 @@ FILE2 open2 (char *filename) {
 
 
 int close2 (FILE2 handle) {
-  if (!has_initialized) {
-    init_blocks();
-    has_initialized = 1;
-  }
+  return -1;
 }
 
 
 int read2 (FILE2 handle, char *buffer, int size) {
-  
+  return -1;
 }
 
 
 int write2 (FILE2 handle, char *buffer, int size) {
-  
+  return -1;
 }
 
 
 int truncate2 (FILE2 handle) {
-  printf("\n%i\n",pathsAreEquivalent("/a/b/", "/a/b/"));
-  printf("%i\n",pathsAreEquivalent("/a/b", "/a/b/"));
-  printf("%i\n",pathsAreEquivalent("/a/b/", "/a/b"));
-  printf("%i\n",pathsAreEquivalent("/a/b", "/a/b"));
-  printf("%i\n",pathsAreEquivalent("/a/b/", "/a/"));
+  return -1;
 }
 
 
@@ -220,111 +213,53 @@ int seek2 (FILE2 handle, DWORD offset) {
 
 int mkdir2 (char *pathname) {
   if (!has_initialized) {
-    init_blocks();
-    has_initialized = 1;
-  }
-  
-  if (!path_is_valid(pathname, TYPEVAL_DIRETORIO)) {
-    printf("[ERRO] Path %s inválido\n\n", pathname);
-    return -1;
-  }
-  
-  // pega registro do root no mft
-  FirstFila2(&area_MFT);
-  NextFila2(&area_MFT);
-  
-  reg_MFT *dir;
-  dir = (reg_MFT *) malloc(sizeof(reg_MFT));
-  dir = GetAtIteratorFila2(&area_MFT);
-  
-  // pega entradas
-  FILA2 entradas;
-  CreateFila2(&entradas);
-  
-  char *token;
-  char str[MAX_FILE_NAME_SIZE];
-  strcpy(str, pathname);
-  
-  token = strtok(str, "/");
-  char *lastToken;
-  
-  int should_tokenize = 0;
-  
-  // vai percorrer os dirs intermediarios
-  while (token != NULL) {
-    lastToken = token;
-    should_tokenize = 1;
-    
-    // lê suas entradas
-    readEntradas2(dir->tuplas, &entradas);
-    FirstFila2(&entradas);
-    
-    // pega o primeiro registro (se houver)
-    struct t2fs_record *record;
-    record = malloc(sizeof(struct t2fs_record));
-    record = GetAtIteratorFila2(&entradas);
-    
-    // percorre todas entradas procurando se tem algum arquivo com mesmo nome do que quero criar
-    while (record != NULL) {
-      // se o nome da entrada for o mesmo do diretório que está sendo percorrido atualmente
-      if (strcmp(record->name, lastToken) == 0) {
-        dir = busca_regMFT(record->MFTNumber);
-        if (dir == NULL) {
-          printf("[ERRO] Não foi possível achar diretórios intermediários.\n");
-          return -1;
-        }
-      }
-      
-      // se o nome da entrada for o mesmo que o nome do dir que quero criar
-      if (strcmp(record->name, nameFromPath(pathname)) == 0) {
-        if (should_tokenize) {
-          token = strtok (NULL, "/");
-          should_tokenize = 0;
-        }
-        
-        // se token = NULL, quer dizer que chegou no último dir do path dado.
-        // ou seja, se já tem uma entrada com o mesmo nome do dir que quero criar, não pode criar!
-        if (token == NULL) {
-          printf("[ERRO] Já existe um diretorio com este path\n\n");
-          return -1;
-        }
-      }
-      
-      NextFila2(&entradas);
-      record = GetAtIteratorFila2(&entradas);
-    }
-    if(should_tokenize) {
-      token = strtok (NULL, "/");
-      should_tokenize = 0;
-    }
-  }
-  
-  // se chegou até aqui, pode criar um registro sem medo
-  struct t2fs_record *new_record;
-  new_record = malloc(sizeof(struct t2fs_record));
-  new_record = createRegister(TYPEVAL_DIRETORIO, nameFromPath(pathname), 0, 0, 0);
-  
-  // cria novo registro do mft para este dir
-  reg_MFT *novo_regMFT;
-	novo_regMFT = (reg_MFT *) malloc(sizeof(reg_MFT));
-  
-	CreateFila2(&novo_regMFT->tuplas);
-  
-  struct 	t2fs_4tupla *tuplaAtual;
-  
-  // cria as 32 tuplas do registro
-  int i;
-  for(i = 0; i < 32; i++) {
-    tuplaAtual = createTuplaPointer(0, 0, 0, 0);
-    AppendFila2(&novo_regMFT->tuplas, tuplaAtual);
-  }
-  
-  int mft_livre = busca_regMFT_livre();
-  printf("mft: %i\n", mft_livre);
-  
-  // ADICIONAR O REG_MFT NA FILA/LISTA DE ENTRADAS DO DIRETORIO PAI
-    
-  return 0;
+		init_blocks();
+		has_initialized = 1;
+	}
+ 
+	if (!path_is_valid(pathname, TYPEVAL_DIRETORIO)) {
+		printf("[ERRO] Path %s inválido\n\n", pathname);
+		return -1;
+	}
+
+	DIRETORIO *dirPai;
+	dirPai = buscaDiretorioPai(pathname, strlen(pathname));
+	if(dirPai == NULL)
+		return -1;
+	
+	DIRETORIO *novo_diretorio;
+	novo_diretorio = (DIRETORIO *) malloc(sizeof(DIRETORIO));
+	
+	//pega nome do novo arquivo e path do pai
+	char *dirName;
+	
+	char *paiPath;
+	paiPath = pathDoPai(pathname);
+	novo_diretorio->pai_pathname = paiPath;
+
+	//cria um novo t2fs_record
+	registro_dir *t2fs_reg = (registro_dir *) malloc(sizeof(registro_dir));
+	t2fs_reg->TypeVal = TYPEVAL_DIRETORIO;
+	dirName = nameFromPath(pathname);
+	memcpy(t2fs_reg->name, dirName, MAX_FILE_NAME_SIZE);
+	t2fs_reg->blocksFileSize = 0;
+	t2fs_reg->bytesFileSize = 0;
+	t2fs_reg->MFTNumber = busca_regMFT_livre();
+	
+	//salva novo t2fs_record no diretorio pai e no novo arquivo
+	AppendFila2(&dirPai->entradas, t2fs_reg);
+	novo_diretorio->t2fs_reg = t2fs_reg;
+
+	//inicializa dados de execução do novo arquivo
+	novo_diretorio->current_entry = 0;
+
+	last_dir_handle++;
+	novo_diretorio->handle = last_dir_handle;
+
+	//coloca arquivo na lista de arquivos abertos
+	AppendFila2(&dirList, novo_diretorio);
+
+	return novo_diretorio->handle;
 }
 
 
@@ -388,7 +323,47 @@ int rmdir2 (char *pathname) {
 
 
 DIR2 opendir2 (char *pathname) {
-  
+  if (!has_initialized) {
+		init_blocks();
+		has_initialized = 1;
+	}
+
+	if (!path_is_valid(pathname, TYPEVAL_DIRETORIO)) {
+		printf("[ERRO] Path %s inválido\n\n", pathname);
+		return -1;
+	}
+
+	if(diretorio_ja_aberto(pathname) != 0){
+		return -1;
+	}
+
+	DIRETORIO *dirPai;
+	dirPai = buscaDiretorioPai(pathname, strlen(pathname));
+	if(dirPai == NULL)
+		return -1;
+	
+	DIRETORIO *novo_diretorio;
+	novo_diretorio = (DIRETORIO *) malloc(sizeof(DIRETORIO));
+
+	//inicializa caminho do diretório pai
+	char *paiPath;
+	paiPath = pathDoPai(pathname);
+	novo_diretorio->pai_pathname = paiPath;
+
+	//pega t2fs_reg do diretório pai e salva no novo arquivo
+	registro_dir *t2fs_reg = get_t2fs_record_from_dir(dirPai, nameFromPath(pathname));
+	novo_diretorio->t2fs_reg = t2fs_reg;
+
+	//inicializa dados de execução do novo arquivo
+	novo_diretorio->current_entry = 0;
+
+	last_dir_handle++;
+	novo_diretorio->handle = last_dir_handle;
+
+	//coloca arquivo na lista de arquivos abertos
+	AppendFila2(&dirList, novo_diretorio);
+
+	return novo_diretorio->handle;
 }
 
 
@@ -479,7 +454,7 @@ void init_implementation(){
 	root = (DIRETORIO *) malloc(sizeof(DIRETORIO));
 
 	//cria um novo t2fs_record para o root
-	registro_dir *t2fs_reg = (registro_dir *) malloc(sizeof(registro_dir));	
+	registro_dir *t2fs_reg = (registro_dir *) malloc(sizeof(registro_dir));
 	t2fs_reg->TypeVal = 2;
 	strcpy(t2fs_reg->name, "/");
 	t2fs_reg->blocksFileSize = 0;
