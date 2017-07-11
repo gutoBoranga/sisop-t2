@@ -22,7 +22,6 @@ int main() {    //COMENTA O TESTE QUE TU NAO QUISER TESTAR
     strcpy(t2fs_reg->name, "/");
     dir1->t2fs_reg = t2fs_reg;
     dir1->pai_pathname = "/";
-    dir1->handle = 1;
     AppendFila2(&dirList, dir1);
 
     DIRETORIO *dir2 = malloc(sizeof(DIRETORIO));
@@ -30,7 +29,6 @@ int main() {    //COMENTA O TESTE QUE TU NAO QUISER TESTAR
     strcpy(t2fs_reg->name, "diretorio2");
     dir2->t2fs_reg = t2fs_reg;
     dir2->pai_pathname = "/";
-    dir1->handle = 2;
     AppendFila2(&dirList, dir2);
 
     DIRETORIO *dir3 = malloc(sizeof(DIRETORIO));
@@ -38,7 +36,6 @@ int main() {    //COMENTA O TESTE QUE TU NAO QUISER TESTAR
     strcpy(t2fs_reg->name, "diretorio3");
     dir3->t2fs_reg = t2fs_reg;
     dir3->pai_pathname = "/diretorio2";
-    dir1->handle = 3;
     AppendFila2(&dirList, dir3);
 
 

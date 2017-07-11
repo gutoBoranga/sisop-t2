@@ -159,30 +159,6 @@ registro_dir* getEntrada(DIRETORIO *dir){
 }
 
 /*----------------------------------------------------------------------------------------------
-Função que busca um t2fs_record na fila de entradas de um diretório aberto.
-
-Retorna: registro_dir* --t2fs_record se achou
-	 NULL	       -- Se ocorreu algum erro
-
-GABRIEL JOB
-----------------------------------------------------------------------------------------------*/
-registro_dir* get_t2fs_record_from_dir(DIRETORIO *dir, char *name){
-	registro_dir *registroAtual;
-
-	char name_string[MAX_FILE_NAME_SIZE];
-	memcpy(name_string, name, MAX_FILE_NAME_SIZE);	
-	
-	if(FirstFila2(&dir->entradas) == 0){
-		do{
-			registroAtual = (registro_dir *) GetAtIteratorFila2(&dir->entradas);
-			if(strcmp(registroAtual->name, name_string))
-				return registroAtual;
-		}while(NextFila2(&dir->entradas));
-	}
-	return NULL;
-}
-
-/*----------------------------------------------------------------------------------------------
 Função que busca o número de um registro de MFT disponível.
 
 Retorna: MFTNumber --Número do registro caso encontrado

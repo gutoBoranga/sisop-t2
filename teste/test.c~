@@ -18,7 +18,7 @@ int main() {
   // printf("%s\n", nameFromPath("bla/capivara/verde"));
   // mkdir2("/a/");*/
 
-	int resultado_create = create2("/teste");  
+	int resultado_create = create2("/teste/a");  
 
 	printf("\nResultado do create: %d\n", resultado_create);
 

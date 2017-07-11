@@ -164,25 +164,8 @@ FILE2 open2 (char *filename) {
 	ARQUIVO *novo_arquivo;
 	novo_arquivo = (ARQUIVO *) malloc(sizeof(ARQUIVO));
 
-	//inicializa caminho do diretório pai
-	char *paiPath;
-	paiPath = pathDoPai(filename);
-	novo_arquivo->pai_pathname = paiPath;
-
-	//pega t2fs_reg do diretório pai e salva no novo arquivo
-	registro_dir *t2fs_reg = get_t2fs_record_from_dir(dirPai, nameFromPath(filename));
-	novo_arquivo->t2fs_reg = t2fs_reg;
-
-	//inicializa dados de execução do novo arquivo
-	novo_arquivo->current_pointer = 0;
-
-	last_arq_handle++;
-	novo_arquivo->handle = last_arq_handle;
-
-	//coloca arquivo na lista de arquivos abertos
-	AppendFila2(&arqList, novo_arquivo);
-
-	return novo_arquivo->handle;
+	
+ 
 }
 
 

@@ -45,7 +45,7 @@ DIRETORIO* buscaDiretorioPai(char *pathname, int pathname_len);
 DIRETORIO* getDiretorio(DIR2 handle);
 ARQUIVO* getArquivo(FILE2 handle);
 registro_dir* getEntrada(DIRETORIO *dir);
-registro_dir* get_t2fs_record_from_dir(DIRETORIO *dir, char *name);
+registro_dir* get_t2fs_record_from_dir(DIRETORIO *dir, char *name)
 // reg_MFT* busca_regMFT(int MFTNumber);
 int busca_regMFT_livre();
 int readEntradas(int dirByteSize, PFILA2 entradasList);
