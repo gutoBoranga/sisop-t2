@@ -7,6 +7,8 @@
 #include <implementation.h>
 
 int main() {
-  mkdir2("/a");
+  nameFromPath("/bla/capivara/verde/com/goiaba");
+  // printf("%s\n", nameFromPath("bla/capivara/verde"));
+  // mkdir2("/a");
   return 0;
 }

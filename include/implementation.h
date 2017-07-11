@@ -53,3 +53,4 @@ int readEntradas(int dirByteSize, PFILA2 entradasList);
 int readBlock(int sectorNumber, unsigned char buffer[BLOCK_SIZE]);
 int writeBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]);
 int printaDiretoriosLista(FILA2 fila);
+char *nameFromPath(char *pathname);

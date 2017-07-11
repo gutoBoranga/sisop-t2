@@ -354,3 +354,19 @@ int readTupla(int sector, int position_in_sector, struct t2fs_4tupla* tupla) {
 
     return 0;
 }
+
+char *nameFromPath(char *pathname) {
+  char *token;
+  char str[MAX_FILE_NAME_SIZE];
+  strcpy(str, pathname);
+  
+  token = strtok(str, "/");
+  char *lastToken;
+  while (token != NULL) {
+    lastToken = token ;
+    token = strtok (NULL, "/");
+    
+    printf("\n%s", lastToken);
+  }
+  printf("\n\n");
+}

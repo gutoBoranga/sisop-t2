@@ -27,8 +27,6 @@ void printDeletedIndexesList();
 struct t2fs_bootBlock bootBlock;
 struct t2fs_mftBlock mftBlock;
 
-FILA2 areaMFT; // nosso novo mft
-
 int has_initialized = 0;
 int mft_filesDescriptors_max_size = MFT_BLOCK_SIZE - NUM_SPECIAL_RECORDS;
 
@@ -229,6 +227,87 @@ int mkdir2 (char *pathname) {
     return -1;
   }
   
+  // pega registro do root no mft
+  FirstFila2(&area_MFT);
+  NextFila2(&area_MFT);
+  
+  reg_MFT *dir;
+  dir = (reg_MFT *) malloc(sizeof(reg_MFT));
+  dir = GetAtIteratorFila2(&area_MFT);
+  
+  // pega entradas
+  FILA2 entradas;
+  CreateFila2(&entradas);
+  
+  char *token;
+  char str[MAX_FILE_NAME_SIZE];
+  strcpy(str, pathname);
+  
+  token = strtok(str, "/");
+  char *lastToken;
+  
+  int can_make_dir = 0;
+  
+  // vai percorrer os dirs intermediarios
+  while (token != NULL) {
+    lastToken = token;
+    
+    // se não achar o registro mft do diretorio intermediario atual
+    if (FUNCAO_QUE_RETORNA_UM_REG_MFT(&dir, lastToken) != 0) {
+      token = strtok (NULL, "/");
+      
+      // se o diretorio atual era o último e nao achou registro mft pra ele,
+      // é porque não existe arquivo com este path, portanto pode criar
+      if (token == NULL) {
+        can_make_dir = 1;
+      } else {
+        printf("[ERRO] Não existem diretorios intermediários\n\n");
+        return -1;
+      }
+    
+    // se achou o registro mft do dir atual
+    } else {
+      // lê suas entradas
+      readEntradas2(dir->tuplas, &entradas);
+      FirstFila2(&entradas);
+      
+      // pega o primeiro registro (se houver)
+      struct t2fs_record *record;
+      record = malloc(sizeof(struct t2fs_record));
+      record = GetAtIteratorFila2(&entradas);
+      
+      token = strtok (NULL, "/");
+      
+      // percorre todas entradas procurando se tem algum arquivo com mesmo nome do que quero criar
+      while (record != NULL && !can_make_dir) {
+        // se o nome da entrada for o mesmo que o nome do dir que quero criar
+        if (strcmp(record->name, nameFromPath(pathname)) == 0) {
+          // se token = NULL, quer dizer que chegou no último dir do path dado.
+          // ou seja, se já tem uma entrada com o mesmo nome do dir que quero criar, não pode criar!
+          if (token == NULL) {
+            printf("[ERRO] Já existe um diretorio com este path\n\n");
+            return -1;
+          }
+        } else {
+          // neste caso, é o último dir do path e não existe entrada com mesmo nome no diretório pai
+          // logo, pode criar
+          if (token == NULL) {
+            can_make_dir = 1;
+          }
+        }
+        
+        NextFila2(&entradas);
+        record = GetAtIteratorFila2(&entradas);
+      }
+    }
+  }
+  
+  // se chegou até aqui, pode criar um registro sem medo
+  struct t2fs_record *new_record;
+  new_record = malloc(sizeof(struct t2fs_record));
+  new_record = createRegister(TYPEVAL_DIRETORIO, nameFromPath(pathname), 0, 0, 0);
+  
+  // cria novo registro do mft para este dir
   reg_MFT *novo_regMFT;
 	novo_regMFT = (reg_MFT *) malloc(sizeof(reg_MFT));
   
@@ -243,39 +322,12 @@ int mkdir2 (char *pathname) {
     AppendFila2(&novo_regMFT->tuplas, tuplaAtual);
   }
   // adiciona na fila de mft_regs
-  AppendFila2(&area_MFT, &novo_regMFT->tuplas);
-  
-  // pega registro do root no mft
-  FirstFila2(&area_MFT);
-  NextFila2(&area_MFT);
-  
-  reg_MFT *root;
-	root = (reg_MFT *) malloc(sizeof(reg_MFT));
-  root = GetAtIteratorFila2(&area_MFT);
-  
-  FILA2 entradas;
-  CreateFila2(&entradas);
-  
-  // pega entradas
-  int result = readEntradas2(root->tuplas, &entradas);
-  
-  FirstFila2(&entradas);
-  
-  // pega o primeiro registro (se houver)
-  struct t2fs_record *record;
-  record = malloc(sizeof(struct t2fs_record));
-  record = GetAtIteratorFila2(&entradas);
-  
-  // vê se tem registro
-  if (record != NULL) {
-    printf("%s\n", record->name);
-  } else {
-    printf("Record NULL\n");
-  }
-
-  // aqui teremos que tentar escrever
-
-  return(0);
+  AppendFila2(&area_MFT, &novo_regMFT);
+    
+  // precisamos de uma referencia para o diretorio pai
+  // e ai adicionar o new_record nas entradas dele
+    
+  return 0;
 }
 
 
@@ -394,10 +446,6 @@ int closedir2 (DIR2 handle) {
 
 
 int identify2 (char *name, int size) {
-  
-  // função implementada em mft_manager.c apenas p/ testar a integração dos arquivos
-  print_the_sound_of_a_capybara();
-  
   if (strlen(name) <= size) {
     printf("\n%s\n", name);
     return 0;
@@ -446,10 +494,6 @@ void initMFTBlock() {
   // cria registro t2fs do dir root
   struct t2fs_record *root;
   root = createRegister(TYPEVAL_DIRETORIO, "/", 1, 0, mftBlock.next_valid_MFTnumber);
-  
-  
-  
-  // tem que salvar no disco os registros t2fs_record
   
   
   
