@@ -56,7 +56,7 @@ di_node* removeFirstDInode(di_node *head);
 struct t2fs_4tupla createTupla(DWORD atributeType, DWORD vbn, DWORD lbn, DWORD contiguosBlocks);
 void print_the_sound_of_a_capybara();
 
-int boot_area_MFT (PFILA2 area_MFT);
-void print_area_MFT(PFILA2 area_MFT);
+int boot_area_MFT ();
+void print_area_MFT();
 
 struct t2fs_4tupla *createTuplaPointer(DWORD atributeType, DWORD vbn, DWORD lbn, DWORD contiguosBlocks);

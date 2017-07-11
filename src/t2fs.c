@@ -14,7 +14,7 @@ void init_blocks();
 void initBootBlock();
 void initMFTBlock();
 
-struct t2fs_record *createRegister(BYTE typeVal, char name[MAX_FILE_NAME_SIZE], DWORD blocksSize, DWORD bytesSize, DWORD mftNumber);
+struct t2fs_record *createRegister(BYTE typeVal, char *name, DWORD blocksSize, DWORD bytesSize, DWORD mftNumber);
 int path_is_valid(char *pathname, DWORD typeVal);
 int stringCompare(char str1[MAX_FILE_NAME_SIZE], char str2[MAX_FILE_NAME_SIZE]);
 int pathsAreEquivalent(char path1[MAX_FILE_NAME_SIZE], char path2[MAX_FILE_NAME_SIZE]);
@@ -34,77 +34,43 @@ int mft_filesDescriptors_max_size = MFT_BLOCK_SIZE - NUM_SPECIAL_RECORDS;
 
 FILE2 create2 (char *filename) {
   if (!has_initialized) {
-    init_blocks();
-    has_initialized = 1;
-  }
-  
-  if (!path_is_valid(filename, TYPEVAL_REGULAR)) {
-    printf("[ERRO] Path %s inválido\n\n", filename);
-    return -1;
-  }
-  
-  if (!father_exists(filename, TYPEVAL_REGULAR)) {
-    return -1;
-  }
-  
-  if (path_already_exists(filename)) {
-    printf("[ERRO] Já existe um arquivo com o path %s\n\n", filename);
-    return -1;
-  }
-  
-  int mftNumber;
-  int index;
-  
-  // se houver algum indice deletado na lista, pega o indice dele pro novo registro
-  if (mftBlock.deleted_indexes != NULL) {
-    index = mftBlock.deleted_indexes->index - NUM_SPECIAL_RECORDS;
-    mftNumber = mftBlock.filesDescriptors[index]->record->MFTNumber;
-    
-    // libera mem do registro anteriormente naquele indice
-    free(mftBlock.filesDescriptors[index]);
-    //
-    // talvez tenha que desalocar tudo que o antigo registro apontava. não sei
-    //
-    
-    // e remove da lista
-    mftBlock.deleted_indexes = removeFirstDInode(mftBlock.deleted_indexes);
-    
-  // se não houver nenhum registro removido pra reaproveitar
-  } else {
-    mftNumber = mftBlock.next_valid_MFTnumber;
-    index = mftBlock.next_valid_MFTnumber - NUM_SPECIAL_RECORDS;
-    
-    mftBlock.next_valid_MFTnumber ++;
-  }
-  
-  // cria novo registro t2fs
-  struct t2fs_record *new_record;
-  new_record = createRegister(TYPEVAL_REGULAR, filename, 1, 0, mftNumber);
-  
-  // salvar no disco
-  
-  
-  // cria novo mft_record no mft_manager
-  mft_record *mft_rec;
-  mft_rec = malloc(sizeof(mft_record));
-  mft_rec->record = new_record;
-  mft_rec->valid = MFT_RECORD_VALID;
-  mft_rec->tuplas[0] = createTupla(0, 0, 0, 0); // tem que ver estes parametros
-  
-  // adiciona no array de registros do mtfBlock
-  mftBlock.filesDescriptors[index] = mft_rec;
-  
-  printf("---------- Novo registro no MFT ----------\n");
-  printf("| Nome: %s\n", mftBlock.filesDescriptors[index]->record->name);
-  printf("| MFTNumber: %i\n", mftBlock.filesDescriptors[index]->record->MFTNumber);
-  printf("| Type: regular\n");
-  printf("------------------------------------------\n\n");
-  
-  return 0;
-  
-  //
-  // FALTA RETORNAR O FILE
-  //
+		init_blocks();
+		has_initialized = 1;
+	}
+ 
+	if (!path_is_valid(filename, TYPEVAL_REGULAR)) {
+		printf("[ERRO] Path %s inválido\n\n", filename);
+		return -1;
+	}
+
+	DIRETORIO *dirPai;
+	dirPai = buscaDiretorioPai(filename, strlen(filename));
+	if(dirPai == NULL)
+		return -1;
+
+	ARQUIVO *novo_arquivo;
+	novo_arquivo = (ARQUIVO *) malloc(sizeof(ARQUIVO));
+
+	//função que pega só o nome do filename
+	//função que pega tudo menos o nome do file name
+
+	registro_dir *t2fs_reg;	//cria um novo t2fs_record
+	t2fs_reg->TypeVal = 1;
+	t2fs_reg->blocksFileSize = 0;
+	t2fs_reg->bytesFileSize = 0;
+	t2fs_reg->MTFNumber = busca_regMFT_livre();
+	
+	AppendFila2(&dirPai->entradas, t2fs_reg);
+	novo_arquivo->t2fs_reg = t2f2_reg;
+
+	novo_arquivo->current_pointer = 0;
+
+	last_arq_handle++;
+	novo_arquivo->handle = last_arq_handle;
+
+	AppendFila2(&arqList, novo_arquivo);
+
+	return novo_arquivo->handle;	
 }
 
 
@@ -246,7 +212,7 @@ int mkdir2 (char *pathname) {
   token = strtok(str, "/");
   char *lastToken;
   
-  int should_tokenize, can_make_dir = 0;
+  int should_tokenize = 0;
   
   // vai percorrer os dirs intermediarios
   while (token != NULL) {
@@ -262,10 +228,17 @@ int mkdir2 (char *pathname) {
     record = malloc(sizeof(struct t2fs_record));
     record = GetAtIteratorFila2(&entradas);
     
-    // token = strtok (NULL, "/");
-    
     // percorre todas entradas procurando se tem algum arquivo com mesmo nome do que quero criar
-    while (record != NULL && !can_make_dir) {
+    while (record != NULL) {
+      // se o nome da entrada for o mesmo do diretório que está sendo percorrido atualmente
+      if (strcmp(record->name, lastToken) == 0) {
+        dir = busca_regMFT(record->MFTNumber);
+        if (dir == NULL) {
+          printf("[ERRO] Não foi possível achar diretórios intermediários.\n");
+          return -1;
+        }
+      }
+      
       // se o nome da entrada for o mesmo que o nome do dir que quero criar
       if (strcmp(record->name, nameFromPath(pathname)) == 0) {
         if (should_tokenize) {
@@ -283,17 +256,11 @@ int mkdir2 (char *pathname) {
       
       NextFila2(&entradas);
       record = GetAtIteratorFila2(&entradas);
-      
-      if(should_tokenize) {
-        token = strtok (NULL, "/");
-        should_tokenize = 0;
-      }
     }
-  }
-  
-  if (!can_make_dir) {
-    printf("[ERRO] Path inválido\n\n");
-    return -1;
+    if(should_tokenize) {
+      token = strtok (NULL, "/");
+      should_tokenize = 0;
+    }
   }
   
   // se chegou até aqui, pode criar um registro sem medo
@@ -315,11 +282,11 @@ int mkdir2 (char *pathname) {
     tuplaAtual = createTuplaPointer(0, 0, 0, 0);
     AppendFila2(&novo_regMFT->tuplas, tuplaAtual);
   }
-  // adiciona na fila de mft_regs
-  AppendFila2(&area_MFT, &novo_regMFT);
-    
-  // precisamos de uma referencia para o diretorio pai
-  // e ai adicionar o new_record nas entradas dele
+  
+  int mft_livre = busca_regMFT_livre();
+  printf("mft: %i\n", mft_livre);
+  
+  // ADICIONAR O REG_MFT NA FILA/LISTA DE ENTRADAS DO DIRETORIO PAI
     
   return 0;
 }
@@ -467,7 +434,7 @@ void initMFTBlock() {
 	FILA2 areaMFT_2;
 
 	if(CreateFila2(&area_MFT) == 0){
-		boot_area_MFT(&area_MFT);
+		boot_area_MFT();
   }
   
   
@@ -518,7 +485,7 @@ void initMFTBlock() {
   mftBlock.filesDescriptors = malloc(sizeof(mft_record) * mft_filesDescriptors_max_size);
 }
 
-struct t2fs_record *createRegister(BYTE typeVal, char name[MAX_FILE_NAME_SIZE], DWORD blocksSize, DWORD bytesSize, DWORD mftNumber) {
+struct t2fs_record *createRegister(BYTE typeVal, char *name, DWORD blocksSize, DWORD bytesSize, DWORD mftNumber) {
     struct t2fs_record *new_register;
     new_register = malloc(sizeof(struct t2fs_record));
     
@@ -531,6 +498,7 @@ struct t2fs_record *createRegister(BYTE typeVal, char name[MAX_FILE_NAME_SIZE], 
     return new_register;
 }
 
+// vale lembrar que aqui retorno 0 significa falso e 1 verdadeiro
 int path_is_valid(char *pathname, DWORD typeVal) {
   char c;
   int i = 0;
@@ -538,6 +506,16 @@ int path_is_valid(char *pathname, DWORD typeVal) {
   // garante que começa no root
   c = pathname[0];
   if (c != '/') {
+    return 0;
+  }
+  
+  // garante que não quer criar o root
+  char *token;
+  char str[MAX_FILE_NAME_SIZE];
+  strcpy(str, pathname);
+  
+  token = strtok(str, "/");
+  if (token == NULL) {
     return 0;
   }
     

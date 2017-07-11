@@ -65,11 +65,11 @@ int main(){
 	FILA2 areaMFT_2;
 
 	if(CreateFila2(&area_MFT) == 0){
-		boot_area_MFT(&area_MFT);
+		boot_area_MFT();
 		print_area_MFT(&area_MFT);
 		write_area_MFT(&area_MFT);
 		if(CreateFila2(&areaMFT_2) == 0){
-			boot_area_MFT(&areaMFT_2);
+			boot_area_MFT();
 			print_area_MFT(&areaMFT_2);
 		}
 	}

@@ -14,35 +14,30 @@
 #define TUPLA_SIZE 16
 #define BLOCK_SIZE SECTOR_SIZE*SECTORS_PER_BLOCK
 
-
-
 // structs
 
 typedef struct t2fs_record registro_dir;
 
 typedef struct diretorio {
 	DIR2 handle;
-	char* name;
+	registro_dir *t2fs_reg;
 	char* pai_pathname;
 	int current_entry;
-	int MTFNumber;
-	int blockSize;
-	int byteSize;
 	FILA2 entradas;
 } DIRETORIO;
 
 typedef struct arquivo {
 	FILE2 handle;
-	char* name;
+	registro_dir *t2fs_reg;
 	char* pai_pathname;
 	int current_pointer;
-	int MFTNumber;
-	int blockSize;
-	int byteSize;
 } ARQUIVO;
 
 FILA2 dirList;
+FILA2 arqList;
 
+DIR2 last_dir_handle;
+FILE2 last_arq_handle;
 
 // functions declaration
 
@@ -55,3 +50,4 @@ int readEntradas(int dirByteSize, PFILA2 entradasList);
 int readBlock(int sectorNumber, unsigned char buffer[BLOCK_SIZE]);
 int writeBlock(int sectorNumber, unsigned char blockBuffer[BLOCK_SIZE]);
 int printaDiretoriosLista(FILA2 fila);
+char *pathDoPai(char *pathname);

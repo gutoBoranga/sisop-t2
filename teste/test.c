@@ -7,8 +7,12 @@
 #include <implementation.h>
 
 int main() {
-  nameFromPath("/bla/capivara/verde/com/goiaba");
+  char *bla;
+  bla = "oi";
+  bla = pathDoPai("/a/b/c");
+  printf("%s\n", bla);
+  
   // printf("%s\n", nameFromPath("bla/capivara/verde"));
-  // mkdir2("/a");
+  // mkdir2("/a/");
   return 0;
 }

@@ -87,7 +87,7 @@ Retorna: 0  --Se lida com sucesso
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-int boot_area_MFT (PFILA2 area_MFT){
+int boot_area_MFT (){
 	unsigned char blockBuffer[BLOCK_SIZE];
 	
 	if(readBlock(0, blockBuffer) != 0) return -1; //PEGA NO BLOCO DE BOOT
@@ -97,7 +97,7 @@ int boot_area_MFT (PFILA2 area_MFT){
 	int blocoAtualNumber, i, j, offset = 0;
 	reg_MFT *novo_regMFT;
 
-	for(blocoAtualNumber = 1; blocoAtualNumber <= 1/*MFTBlocksSize*/; blocoAtualNumber++){
+	for(blocoAtualNumber = 1; blocoAtualNumber <= MFTBlocksSize; blocoAtualNumber++) {
 		if(readBlock(blocoAtualNumber,blockBuffer)  != 0)
 			return -1;
 
@@ -117,7 +117,7 @@ int boot_area_MFT (PFILA2 area_MFT){
 				offset += 16;
 				AppendFila2(&novo_regMFT->tuplas, tuplaAtual);
 			}
-			AppendFila2(area_MFT, &novo_regMFT->tuplas);
+			AppendFila2(&area_MFT, &novo_regMFT->tuplas);
 		}
 	}
 	return 0;
@@ -131,7 +131,7 @@ Retorna: 0  --Se escrita com sucesso
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-int write_area_MFT(PFILA2 area_MFT){
+int write_area_MFT(){
 	unsigned char blockBuffer[BLOCK_SIZE];
 	
 	if(readBlock(0, blockBuffer) != 0) return -1; //PEGA NO BLOCO DE BOOT
@@ -143,12 +143,12 @@ int write_area_MFT(PFILA2 area_MFT){
 	int blocoAtualNumber;
 	int offset = 0;
 	int i, j, k;
-	FirstFila2(area_MFT);
-	for(blocoAtualNumber = 1; blocoAtualNumber <= 1/*MFTBlocksSize*/; blocoAtualNumber++){
+	FirstFila2(&area_MFT);
+	for(blocoAtualNumber = 1; blocoAtualNumber <= MFTBlocksSize; blocoAtualNumber++) {
 		offset = 0;
 		
 		for(i = 0; i < 2; i++){
-			regMFT = (reg_MFT *) GetAtIteratorFila2(area_MFT);
+			regMFT = (reg_MFT *) GetAtIteratorFila2(&area_MFT);
 			FirstFila2(&regMFT->tuplas);
 				
 			for(k = 0; k < 32; k++){
@@ -157,7 +157,7 @@ int write_area_MFT(PFILA2 area_MFT){
 				offset += 16;
 				NextFila2(&regMFT->tuplas);
 			}
-			NextFila2(area_MFT);
+			NextFila2(&area_MFT);
 		}
 		if(writeBlock(blocoAtualNumber, blockBuffer) != 0) return -1;
 	}
@@ -169,14 +169,14 @@ Imprime toda a área de MFT na memória.
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-void print_area_MFT(PFILA2 area_MFT){
+void print_area_MFT(){
 	reg_MFT *regMFT;
 	struct 	t2fs_4tupla *tuplaAtual;
 	int mftNumber=0;
 
-	if(FirstFila2(area_MFT) == 0){
+	if(FirstFila2(&area_MFT) == 0){
 		do{
-			regMFT = (reg_MFT *) GetAtIteratorFila2(area_MFT);
+			regMFT = (reg_MFT *) GetAtIteratorFila2(&area_MFT);
 			if(FirstFila2(&regMFT->tuplas) == 0){
 				printf("\n\n--------------Registro MFT: %d-------------------\n", mftNumber);
 				do{
@@ -188,7 +188,7 @@ void print_area_MFT(PFILA2 area_MFT){
 				}while(NextFila2(&regMFT->tuplas) == 0);
 				mftNumber++;
 			}
-		}while(NextFila2(area_MFT) == 0);
+		}while(NextFila2(&area_MFT) == 0);
 	}
 	else
 		printf("\nAREA INVALIDA");

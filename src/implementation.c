@@ -135,18 +135,19 @@ Retorna: MFTNumber --Número do registro caso encontrado
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-int busca_regMFT_livre(){
+int busca_regMFT_livre() {
 	reg_MFT *regAtual;
 	struct 	t2fs_4tupla *tupla;
-	
 
 	FirstFila2(&area_MFT);
 	NextFila2(&area_MFT);
 	NextFila2(&area_MFT);
 	NextFila2(&area_MFT);
-	NextFila2(&area_MFT); //vai para o primeiro registro não reservado as S.A.
-
-	int MFTNumber = 4;
+  if (NextFila2(&area_MFT) != 0) { //vai para o primeiro registro não reservado as S.A.
+    return -2;
+  }
+  
+	int MFTNumber = 5;
 	do{
 		regAtual = (reg_MFT *) GetAtIteratorFila2(&area_MFT);
 		FirstFila2(&regAtual->tuplas);		//pega a primeira tupla do registro
@@ -155,7 +156,7 @@ int busca_regMFT_livre(){
 			return MFTNumber;
 		
 		MFTNumber++;
-	}while(NextFila2(&area_MFT) == 0);
+	} while(NextFila2(&area_MFT) == 0);
 	
 	return -1;
 }
@@ -168,7 +169,7 @@ Retorna: MFTNumber --Número do registro caso encontrado
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
-reg_MFT* busca_regMFT(int MFTNumber){
+reg_MFT* busca_regMFT(int MFTNumber) {
 	reg_MFT *regAtual;
 	
 	if(FirstFila2(&area_MFT) != 0)
@@ -238,25 +239,19 @@ int readEntradas2(FILA2 tuplas, PFILA2 entradasList) {
   struct t2fs_4tupla *tuplaAtual;
   tuplaAtual = GetAtIteratorFila2(&tuplas);
   
-  if(tuplaAtual == NULL) {
-    printf("Tupla NULL\n");
-  }
-  
   // percorre todas tuplas
   while (tuplaAtual != NULL) {
     // se não for uma "tupla de mapeamento VBN-LBN"
     if (tuplaAtual->atributeType != 1) {
-      printf("Tupla ñ é vbn-lbn\n");
       // se for um registro livre
       if (tuplaAtual->atributeType == -1) {
-        printf("atributeType -1: Registro no mft livre\n\n");
         return -1;
       }
       // se não, ou é registro MFT adicional ou é marcador de fim de encadeamento
       // neste caso, já deve ter colocado na lista todos os registros, então retorna 0
       return 0;
     }
-    printf("Tupla é vbn-lbn!!\n");
+    
     int i, j, k;
     i = j = k = 0;
     
@@ -420,13 +415,38 @@ char *nameFromPath(char *pathname) {
   strcpy(str, pathname);
   
   token = strtok(str, "/");
-  printf("AAA: %s\n", token);
   char *lastToken;
   while (token != NULL) {
     lastToken = token ;
     token = strtok (NULL, "/");
-    
-    printf("\n%s", lastToken);
   }
-  printf("\n\n");
+  return lastToken;
+}
+
+char *pathDoPai(char *pathname) {
+  char *token;
+  char str[MAX_FILE_NAME_SIZE], pathDoPai[MAX_FILE_NAME_SIZE];
+  
+  strcpy(str, pathname);
+  strcpy(pathDoPai, "");
+  
+  token = strtok(str, "/");
+  int levels = 1;
+  
+  char *lastToken;
+  while (token != NULL) {
+    lastToken = token;
+    token = strtok (NULL, "/");
+    
+    if (token != NULL) {
+      strcat(pathDoPai, "/");
+      strcat(pathDoPai, lastToken);
+      levels += 1;
+    }
+  }
+  if (levels <= 1) {
+    strcpy(pathDoPai, "/");
+  }
+  printf("%s\n", pathDoPai);
+  return (char *) pathDoPai;
 }
