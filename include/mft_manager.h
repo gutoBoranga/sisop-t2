@@ -10,7 +10,7 @@
 
 // === Structs ===============
 
-typedef struct registro_mft_TEMPORARIO { //TEMPORARIA
+typedef struct registro_mft {
 	//struct 	t2fs_4tupla tuplas;
 	FILA2 tuplas;
 

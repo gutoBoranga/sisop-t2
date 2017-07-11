@@ -86,7 +86,7 @@ Função que busca um diretório a partir de seu handle na lista de diretórios 
 
 
 Retorna: DIRETORIO* --Ponteiro para a struct do diretório se encontrou
-	 	 NULL 		--Caso contrário
+	 NULL 	    --Caso contrário
 
 GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
@@ -104,10 +104,12 @@ DIRETORIO* getDiretorio(DIR2 handle){ //mudar dirList para uma variavel global
 }
 
 /*----------------------------------------------------------------------------------------------
-Função que diz onde está no disco o próximo bloco do arquivo a ser acessado.
+Função que pega uma entrada de um diretório de acordo com o valor de current_entry.
 
+Retorna: DIRETORIO* --Ponteiro para a struct da entrada se encontrou
+	 NULL 	    --Caso contrário
 
-PS.: Provavelmente é uma boa usar como parâmetro o último bloco já acessado
+GABRIEL JOB
 ----------------------------------------------------------------------------------------------*/
 registro_dir* getEntrada(DIRETORIO *dir){
 	registro_dir *registroAtual;
@@ -123,6 +125,63 @@ registro_dir* getEntrada(DIRETORIO *dir){
 		return registroAtual;
 	}
 	return NULL;
+}
+
+/*----------------------------------------------------------------------------------------------
+Função que busca o número de um registro de MFT disponível.
+
+Retorna: MFTNumber --Número do registro caso encontrado
+		-1 			--Caso não encontrou
+
+GABRIEL JOB
+----------------------------------------------------------------------------------------------*/
+int busca_regMFT_livre(){
+	regMFT *regAtual;
+	struct 	t2fs_4tupla *tupla;
+	
+
+	FirstFila2(&area_MFT);
+	NextFila2(&area_MFT);
+	NextFila2(&area_MFT);
+	NextFila2(&area_MFT);
+	NextFila2(&area_MFT); //vai para o primeiro registro não reservado as S.A.
+
+	int MFTNumber = 4;
+	do{
+		regAtual = (regMFT *) GetAtIteratorFila2(&area_MFT); 
+		FirstFila2(&regAtual->tuplas);		//pega a primeira tupla do registro					
+		tupla = (struct t2fs_4tupla *) GetAtIteratorFila2(&regAtual->tuplas);
+		if(tupla->atributeType == -1)
+			return MFTNumber;
+		
+		MFTNumber++;
+	}while(NextFila2(&area_MFT) == 0);
+	
+	return -1;
+}
+
+/*----------------------------------------------------------------------------------------------
+Função que busca o número de um registro de MFT disponível.
+
+Retorna: MFTNumber --Número do registro caso encontrado
+		-1 			--Caso não encontrou
+
+GABRIEL JOB
+----------------------------------------------------------------------------------------------*/
+regMFT* busca_regMFT(int MFTNumber){
+	regMFT *regAtual;
+	
+	if(FirstFila2(&area_MFT) != 0)
+		return NULL;
+	
+	int i = 0;
+	for(i = 0; i < MFTNumber; i++){
+		if(NextFila2(&area_MFT) != 0)
+			return NULL;
+	}
+	
+	regAtual = (regMFT *) GetAtIteratorFila2(&area_MFT); 
+	return regAtual;
 }
 
 /*----------------------------------------------------------------------------------------------
@@ -353,20 +412,4 @@ int readTupla(int sector, int position_in_sector, struct t2fs_4tupla* tupla) {
     }
 
     return 0;
-}
-
-char *nameFromPath(char *pathname) {
-  char *token;
-  char str[MAX_FILE_NAME_SIZE];
-  strcpy(str, pathname);
-  
-  token = strtok(str, "/");
-  char *lastToken;
-  while (token != NULL) {
-    lastToken = token ;
-    token = strtok (NULL, "/");
-    
-    printf("\n%s", lastToken);
-  }
-  printf("\n\n");
 }
